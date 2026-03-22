@@ -88,9 +88,25 @@ export default function Home() {
         >
           what's everyone dumping
         </h2>
-        {posts.map((post) => (
-          <PostCard key={post._id} post={post} />
-        ))}
+        {posts.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '200px',
+              color: 'var(--text-muted)',
+            }}
+          >
+            nothing here yet. be the first to dump.
+          </div>
+        ) : (
+          <>
+            {posts.map((post) => (
+              <PostCard key={post._id} post={post} />
+            ))}
+          </>
+        )}
       </div>
     </>
   );

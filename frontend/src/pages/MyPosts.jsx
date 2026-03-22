@@ -203,7 +203,7 @@ export default function MyPosts() {
                   }}
                 >
                   <span>{timeAgo(post.createdAt)}</span>
-                  <span>{post.replyCount} replies</span>
+                  <span>{post.replyCount === 1 ? '1 reply' : `${post.replyCount} replies`}</span>
                 </div>
               </div>
             ))}
