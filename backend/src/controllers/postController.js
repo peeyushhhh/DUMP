@@ -1,15 +1,23 @@
 const Post = require('../models/Post');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/responseFormatter');
+const { uploadImage } = require('../services/cloudinaryService');
 
 const createPost = asyncHandler(async (req, res) => {
+  console.log('req.file:', req.file)  // add this line
+  console.log('req.body:', req.body)  // add this line
   const { content, anonymousId } = req.body;
 
   if (!content || !anonymousId) {
     return sendError(res, 'Content and anonymousId are required', 400);
   }
 
-  const post = await Post.create({ content, anonymousId });
+  let imageUrl = null;
+  if (req.file) {
+    imageUrl = await uploadImage(req.file.buffer, req.file.mimetype);
+  }
+
+  const post = await Post.create({ content, anonymousId, imageUrl });
   return sendSuccess(res, { post }, 'Post created', 201);
 });
 

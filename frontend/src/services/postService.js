@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 
-export async function createPost(content, anonymousId) {
-  const { data } = await axiosInstance.post('/posts', { content, anonymousId });
+export async function createPost(formData) {
+  const { data } = await axiosInstance.post('/posts', formData);
   return data;
 }
 

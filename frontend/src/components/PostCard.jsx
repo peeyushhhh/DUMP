@@ -45,6 +45,21 @@ export default function PostCard({ post }) {
       >
         {post.content}
       </p>
+      {post.imageUrl && (
+  <img
+    src={post.imageUrl}
+    alt="drawing"
+    style={{
+      width: '100%',
+      borderRadius: '6px',
+      marginTop: '12px',
+      marginBottom: '4px',
+      display: 'block',
+      maxHeight: '300px',
+      objectFit: 'contain',
+    }}
+  />
+)}
       <div
         style={{
           color: 'var(--text-secondary)',
