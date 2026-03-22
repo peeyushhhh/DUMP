@@ -80,7 +80,7 @@ export default function PostDetail() {
             justifyContent: 'center',
             background: 'var(--bg)',
             color: 'var(--text-muted)',
-            paddingTop: '80px',
+            paddingTop: '100px',
           }}
         >
           loading...

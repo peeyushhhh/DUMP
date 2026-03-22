@@ -40,7 +40,7 @@ export default function CreatePost() {
           minHeight: '100vh',
           background: 'var(--bg)',
           padding: '2rem',
-          paddingTop: '80px',
+          paddingTop: '100px',
           maxWidth: '640px',
           margin: '0 auto',
         }}

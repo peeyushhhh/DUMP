@@ -85,7 +85,7 @@ export default function MyPosts() {
             justifyContent: 'center',
             background: 'var(--bg)',
             color: 'var(--danger)',
-            paddingTop: '80px',
+            paddingTop: '100px',
           }}
         >
           {error}
@@ -102,7 +102,7 @@ export default function MyPosts() {
           minHeight: '100vh',
           background: 'var(--bg)',
           padding: '2rem',
-          paddingTop: '80px',
+          paddingTop: '100px',
           maxWidth: '640px',
           margin: '0 auto',
         }}
