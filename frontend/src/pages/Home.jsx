@@ -25,17 +25,16 @@ export default function Home() {
     return (
       <>
         <Navbar />
-        <div
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--bg)',
-            color: 'var(--text-muted)',
-            paddingTop: '80px',
-          }}
-        >
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg)',
+          color: 'var(--text-muted)',
+          paddingTop: '80px',
+          paddingBottom: '80px',
+        }}>
           loading...
         </div>
       </>
@@ -46,17 +45,16 @@ export default function Home() {
     return (
       <>
         <Navbar />
-        <div
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--bg)',
-            color: 'var(--danger)',
-            paddingTop: '80px',
-          }}
-        >
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg)',
+          color: 'var(--danger)',
+          paddingTop: '80px',
+          paddingBottom: '80px',
+        }}>
           {error}
         </div>
       </>
@@ -66,38 +64,41 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <div
-        style={{
-          minHeight: '100vh',
-          background: 'var(--bg)',
-          padding: '2rem',
-          paddingTop: '80px',
-          maxWidth: '640px',
-          margin: '0 auto',
-        }}
-      >
-        <h2
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            marginBottom: '1.5rem',
-          }}
-        >
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        padding: '2rem',
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        maxWidth: '640px',
+        margin: '0 auto',
+      }}>
+        <h2 style={{
+          color: 'var(--text-muted)',
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.15em',
+          marginBottom: '4px',
+        }}>
           what's everyone dumping
         </h2>
+        <p style={{
+          color: '#555',
+          fontSize: '12px',
+          marginBottom: '1.5rem',
+          fontFamily: "'Space Grotesk', sans-serif",
+        }}>
+          a safe space to dump your thoughts
+        </p>
         {posts.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '200px',
-              color: 'var(--text-muted)',
-            }}
-          >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '200px',
+            color: 'var(--text-muted)',
+          }}>
             nothing here yet. be the first to dump.
           </div>
         ) : (

@@ -59,6 +59,7 @@ export default function CreatePost() {
           background: 'var(--bg)',
           padding: '2rem',
           paddingTop: '100px',
+          paddingBottom: '80px',  // added
           maxWidth: '640px',
           margin: '0 auto',
         }}

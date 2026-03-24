@@ -65,6 +65,7 @@ export default function MyPosts() {
             background: 'var(--bg)',
             color: 'var(--text-muted)',
             paddingTop: '80px',
+            paddingBottom: '80px',
           }}
         >
           loading...

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import AnonProvider from './context/AnonContext'
 import SocketProvider from './context/SocketContext'
@@ -9,9 +9,11 @@ import PostDetail from './pages/PostDetail'
 import MyPosts from './pages/MyPosts'
 import ChatRequests from './pages/ChatRequests'
 import Chat from './pages/Chat'
+import BottomNav from './components/BottomNav'
 
 function AppRoutes() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { acceptedRoomId, setAcceptedRoomId } = useSocketContext()
 
   useEffect(() => {
@@ -20,6 +22,10 @@ function AppRoutes() {
       setAcceptedRoomId(null)
     }
   }, [acceptedRoomId])
+
+  const showBottomNav =
+    ['/', '/create', '/my-posts'].includes(location.pathname) ||
+    location.pathname.startsWith('/post/')
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
@@ -31,6 +37,7 @@ function AppRoutes() {
         <Route path="/chat-requests" element={<ChatRequests />} />
         <Route path="/chat/:roomId" element={<Chat />} />
       </Routes>
+      {showBottomNav && <BottomNav />}
     </div>
   )
 }
