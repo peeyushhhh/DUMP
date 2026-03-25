@@ -17,6 +17,9 @@ export async function getPostById(id) {
   return data;
 }
 
+export const getReplysuggestions = (postId) =>
+  axiosInstance.get(`/posts/${postId}/suggestions`);
+
 export async function deletePost(id, anonymousId) {
   const { data } = await axiosInstance.delete(`/posts/${id}`, {
     data: { anonymousId },

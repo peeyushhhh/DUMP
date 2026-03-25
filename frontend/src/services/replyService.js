@@ -13,3 +13,5 @@ export async function getRepliesByPost(postId) {
   const { data } = await axiosInstance.get(`/replies/${postId}`);
   return data;
 }
+export const getReplysuggestions = (postId) =>
+  axiosInstance.get(`/posts/${postId}/suggestions`);

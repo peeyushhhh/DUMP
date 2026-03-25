@@ -103,6 +103,19 @@ const declineRequest = asyncHandler(async (req, res) => {
   return sendSuccess(res, {}, 'Chat request declined');
 });
 
+// NEW — returns room metadata (createdAt etc.) for timer accuracy
+const getRoom = asyncHandler(async (req, res) => {
+  const { roomId } = req.params;
+
+  const room = await ChatRoom.findById(roomId).lean();
+
+  if (!room) {
+    return sendError(res, 'Chat room not found', 404);
+  }
+
+  return sendSuccess(res, { room });
+});
+
 const getMessages = asyncHandler(async (req, res) => {
   const { roomId } = req.params;
 
@@ -118,5 +131,6 @@ module.exports = {
   getPendingRequests,
   acceptRequest,
   declineRequest,
+  getRoom,
   getMessages,
 };

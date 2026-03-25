@@ -9,22 +9,25 @@ import PostDetail from './pages/PostDetail'
 import MyPosts from './pages/MyPosts'
 import ChatRequests from './pages/ChatRequests'
 import Chat from './pages/Chat'
+import Therapist from './pages/Therapist'
 import BottomNav from './components/BottomNav'
+import DMInbox from './components/DMInbox'
 
 function AppRoutes() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { acceptedRoomId, setAcceptedRoomId } = useSocketContext()
+  const { acceptedRoomId, setAcceptedRoomId, registerRoom } = useSocketContext()
 
   useEffect(() => {
     if (acceptedRoomId) {
+      registerRoom(acceptedRoomId)
       navigate(`/chat/${acceptedRoomId}`)
       setAcceptedRoomId(null)
     }
   }, [acceptedRoomId])
 
   const showBottomNav =
-    ['/', '/create', '/my-posts'].includes(location.pathname) ||
+    ['/', '/create', '/my-posts', '/therapist'].includes(location.pathname) ||
     location.pathname.startsWith('/post/')
 
   return (
@@ -36,7 +39,12 @@ function AppRoutes() {
         <Route path="/my-posts" element={<MyPosts />} />
         <Route path="/chat-requests" element={<ChatRequests />} />
         <Route path="/chat/:roomId" element={<Chat />} />
+        <Route path="/therapist" element={<Therapist />} />
       </Routes>
+
+      {/* Global DM inbox bubble — always mounted, hides itself on chat pages */}
+      <DMInbox />
+
       {showBottomNav && <BottomNav />}
     </div>
   )

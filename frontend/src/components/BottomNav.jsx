@@ -1,76 +1,71 @@
 import { Link, useLocation } from 'react-router-dom'
+import { Home, PlusCircle, User, MessageCircle } from 'lucide-react'
+
+const items = [
+  { path: '/',          Icon: Home,          accent: '#8b5cf6' },
+  { path: '/create',    Icon: PlusCircle,    accent: '#8b5cf6' },
+  { path: '/my-posts',  Icon: User,          accent: '#8b5cf6' },
+  { path: '/therapist', Icon: MessageCircle, accent: '#c2410c' },
+]
 
 export default function BottomNav() {
   const { pathname } = useLocation()
 
-  const items = [
-    {
-      label: 'home',
-      path: '/',
-      icon: (active) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#7c3aed' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
-          <path d="M9 21V12h6v9"/>
-        </svg>
-      )
-    },
-    {
-      label: 'dump it',
-      path: '/create',
-      icon: (active) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#7c3aed' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9"/>
-          <line x1="12" y1="8" x2="12" y2="16"/>
-          <line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
-      )
-    },
-    {
-      label: 'my dumps',
-      path: '/my-posts',
-      icon: (active) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#7c3aed' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="8" r="4"/>
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-        </svg>
-      )
-    }
-  ]
-
   return (
     <nav style={{
       position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: '60px',
+      bottom: 0, left: 0, right: 0,
+      height: '64px',
       background: '#0a0a0a',
-      borderTop: '1px solid #222',
+      borderTop: '1px solid #1a1a1a',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-around',
       zIndex: 1000,
     }}>
-      {items.map((item) => {
-        const active = pathname === item.path
+      {items.map(({ path, Icon, accent }) => {
+        const active = pathname === path
+        const color  = active ? accent : '#444'
+
         return (
           <Link
-            key={item.path}
-            to={item.path}
+            key={path}
+            to={path}
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '3px',
+              justifyContent: 'center',
+              gap: '6px',
               textDecoration: 'none',
-              color: active ? '#7c3aed' : '#555',
-              fontSize: '10px',
-              fontFamily: "'Space Grotesk', sans-serif",
-              minWidth: '60px',
+              minWidth: '56px',
+              height: '100%',
+              position: 'relative',
             }}
           >
-            {item.icon(active)}
-            {item.label}
+            {/* pill indicator */}
+            <span style={{
+              position: 'absolute',
+              top: '6px',
+              width: active ? '20px' : '0px',
+              height: '3px',
+              borderRadius: '99px',
+              background: accent,
+              transition: 'width 0.25s cubic-bezier(0.4,0,0.2,1)',
+            }} />
+
+            {/* icon */}
+            <Icon
+              size={23}
+              color={color}
+              strokeWidth={active ? 2.4 : 1.8}
+              style={{
+                transition: 'color 0.2s, filter 0.2s',
+                filter: active
+                  ? `drop-shadow(0 0 6px ${accent}99)`
+                  : 'none',
+              }}
+            />
           </Link>
         )
       })}

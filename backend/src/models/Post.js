@@ -16,6 +16,15 @@ const postSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    mood: {
+      type: String,
+      enum: ["sad", "angry", "anxious", "numb", "overwhelmed", "hopeful", "confused"],
+      default: "numb",
+    },
+    flagged: {
+      type: Boolean,
+      default: false,
+    },
     sentiment: {
       type: String,
       enum: {

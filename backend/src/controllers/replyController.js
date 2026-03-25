@@ -1,3 +1,4 @@
+const { detectMood, checkToxicity, getReplysuggestions: fetchSuggestions } = require('../services/aiService');
 const Reply = require('../models/Reply');
 const Post = require('../models/Post');
 const asyncHandler = require('../utils/asyncHandler');
@@ -13,6 +14,12 @@ const createReply = asyncHandler(async (req, res) => {
   const post = await Post.findById(postId);
   if (!post) {
     return sendError(res, 'Post not found', 404);
+  }
+
+  // ── AI: Toxicity check ──────────────────────────────────────────
+  const { toxic } = await checkToxicity(content);
+  if (toxic) {
+    return sendError(res, "Your reply couldn't be sent. It may contain harmful content.", 400);
   }
 
   const reply = await Reply.create({ postId, content, anonymousId });

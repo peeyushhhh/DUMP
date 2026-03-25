@@ -6,12 +6,7 @@ import Navbar from '../components/Navbar';
 
 export default function ChatRequests() {
   const { anonId } = useAnon();
-  const {
-    pendingRequests,
-    setPendingRequests,
-    setNotifications,
-    socket,
-  } = useSocketContext();
+  const { pendingRequests, setPendingRequests, setNotifications, socket, registerRoom } = useSocketContext();
   const navigate = useNavigate();
 
   const handleAccept = async (request) => {
@@ -24,6 +19,10 @@ export default function ChatRequests() {
           requesterId: request.requesterId,
           roomId: chatRoom._id,
         });
+      }
+      // Register room on the accepting side too
+      if (chatRoom?._id) {
+        registerRoom(chatRoom._id);
       }
       setPendingRequests((prev) => prev.filter((r) => r._id !== request._id));
       setNotifications((prev) => Math.max(0, prev - 1));
@@ -51,127 +50,119 @@ export default function ChatRequests() {
 
   const getContentSnippet = (post) => {
     if (!post?.content) return '';
-    return post.content.length > 100
-      ? `${post.content.slice(0, 100)}...`
-      : post.content;
+    return post.content.length > 100 ? `${post.content.slice(0, 100)}...` : post.content;
   };
 
   return (
     <>
       <Navbar />
-      <div
-        style={{
-          minHeight: '100vh',
-          background: 'var(--bg)',
-          padding: '2rem',
-          paddingTop: '100px',
-          maxWidth: '640px',
-          margin: '0 auto',
-        }}
-      >
-        <h1
-          style={{
-            color: 'var(--text-primary)',
-            fontSize: '1.75rem',
-            fontWeight: 600,
-            marginBottom: '0.25rem',
-          }}
-        >
-          chat requests
-        </h1>
-        <p
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: '0.875rem',
-            marginBottom: '1.5rem',
-          }}
-        >
-          people who want to talk privately
-        </p>
+      <main className="page-wrap fade-up">
 
-        {pendingRequests.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '120px',
-              color: 'var(--text-muted)',
-            }}
-          >
-            no pending requests
+        {/* Header */}
+        <section className="glass-card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <p className="section-kicker" style={{ marginBottom: '6px' }}>inbox</p>
+          <h1 style={{ color: 'var(--text-primary)', fontSize: '1.4rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+            chat requests
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            people who want to talk privately · chats last 24h
+          </p>
+        </section>
+
+        {/* Count */}
+        {pendingRequests.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <h2 className="section-kicker">pending</h2>
+            <span style={{
+              background: 'rgba(139,92,246,0.15)',
+              color: 'var(--accent)',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: '999px',
+              border: '1px solid rgba(139,92,246,0.25)',
+            }}>
+              {pendingRequests.length}
+            </span>
           </div>
-        ) : (
-          pendingRequests.map((request) => {
-            const post = request.postId;
-            const snippet = getContentSnippet(post);
-            return (
-              <div
-                key={request._id}
-                style={{
-                  background: 'var(--bg-card)',
-                  padding: '1.25rem',
-                  borderRadius: '8px',
-                  marginBottom: '1rem',
-                  borderLeft: '3px solid var(--accent)',
-                }}
-              >
-                <p
-                  style={{
-                    color: 'var(--text-primary)',
-                    fontSize: '0.95rem',
-                    lineHeight: 1.5,
-                    marginBottom: '0.5rem',
-                  }}
-                >
-                  {snippet || 'Post'}
-                </p>
-                <p
-                  style={{
-                    color: 'var(--text-muted)',
-                    fontSize: '0.8rem',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  wants to talk privately
-                </p>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleAccept(request)}
-                    style={{
-                      background: 'var(--accent)',
-                      color: 'var(--text-primary)',
-                      border: 'none',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    accept
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDecline(request)}
-                    style={{
-                      background: 'transparent',
-                      color: 'var(--danger)',
-                      border: '1px solid var(--danger)',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    decline
-                  </button>
-                </div>
-              </div>
-            );
-          })
         )}
-      </div>
+
+        {/* Empty state */}
+        {pendingRequests.length === 0 && (
+          <div className="glass-card" style={{ padding: '3rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📭</div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              no pending requests right now
+            </p>
+          </div>
+        )}
+
+        {/* Request cards */}
+        {pendingRequests.map((request) => {
+          const post = request.postId;
+          const snippet = getContentSnippet(post);
+          return (
+            <article
+              key={request._id}
+              className="glass-card"
+              style={{
+                padding: '1.1rem',
+                marginBottom: '0.65rem',
+                borderLeft: '3px solid var(--accent)',
+              }}
+            >
+              {/* Post snippet */}
+              {snippet && (
+                <p style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.875rem',
+                  lineHeight: 1.55,
+                  marginBottom: '0.5rem',
+                  fontStyle: 'italic',
+                  borderLeft: '2px solid var(--border)',
+                  paddingLeft: '10px',
+                }}>
+                  "{snippet}"
+                </p>
+              )}
+
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '1rem' }}>
+                someone wants to talk privately about this
+              </p>
+
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleAccept(request)}
+                  className="primary-btn"
+                  style={{ fontSize: '0.85rem', padding: '0.5rem 1.25rem' }}
+                >
+                  accept
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDecline(request)}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--danger)',
+                    border: '1px solid rgba(239,68,68,0.35)',
+                    padding: '0.5rem 1.1rem',
+                    borderRadius: '10px',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    transition: 'border-color 150ms ease, background 150ms ease',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  decline
+                </button>
+              </div>
+            </article>
+          );
+        })}
+
+      </main>
     </>
   );
 }

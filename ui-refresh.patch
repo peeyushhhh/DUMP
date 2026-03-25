@@ -1,0 +1,752 @@
+diff --git a/frontend/src/components/BottomNav.jsx b/frontend/src/components/BottomNav.jsx
+index ba1c632..1a6b634 100644
+--- a/frontend/src/components/BottomNav.jsx
++++ b/frontend/src/components/BottomNav.jsx
+@@ -8,7 +8,7 @@ export default function BottomNav() {
+       label: 'home',
+       path: '/',
+       icon: (active) => (
+-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#7c3aed' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
++        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? '#ffffff' : '#777'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+           <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+           <path d="M9 21V12h6v9"/>
+         </svg>
+@@ -17,11 +17,10 @@ export default function BottomNav() {
+     {
+       label: 'dump it',
+       path: '/create',
+-      icon: (active) => (
+-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#7c3aed' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+-          <circle cx="12" cy="12" r="9"/>
+-          <line x1="12" y1="8" x2="12" y2="16"/>
+-          <line x1="8" y1="12" x2="16" y2="12"/>
++      icon: () => (
++        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
++          <line x1="12" y1="7" x2="12" y2="17"/>
++          <line x1="7" y1="12" x2="17" y2="12"/>
+         </svg>
+       )
+     },
+@@ -29,7 +28,7 @@ export default function BottomNav() {
+       label: 'my dumps',
+       path: '/my-posts',
+       icon: (active) => (
+-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#7c3aed' : '#555'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
++        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? '#ffffff' : '#777'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+           <circle cx="12" cy="8" r="4"/>
+           <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+         </svg>
+@@ -40,19 +39,25 @@ export default function BottomNav() {
+   return (
+     <nav style={{
+       position: 'fixed',
+-      bottom: 0,
+-      left: 0,
+-      right: 0,
+-      height: '60px',
+-      background: '#0a0a0a',
+-      borderTop: '1px solid #222',
++      bottom: 9,
++      left: '50%',
++      transform: 'translateX(-50%)',
++      width: 'min(96%, 560px)',
++      height: '64px',
++      background: 'rgba(11, 11, 16, 0.94)',
++      border: '1px solid #2c283d',
++      borderRadius: '16px',
+       display: 'flex',
+       alignItems: 'center',
+       justifyContent: 'space-around',
+       zIndex: 1000,
++      backdropFilter: 'blur(8px)',
++      boxShadow: '0 12px 35px rgba(0,0,0,0.38)'
+     }}>
+       {items.map((item) => {
+         const active = pathname === item.path
++        const isCreate = item.path === '/create'
++
+         return (
+           <Link
+             key={item.path}
+@@ -61,19 +66,30 @@ export default function BottomNav() {
+               display: 'flex',
+               flexDirection: 'column',
+               alignItems: 'center',
+-              gap: '3px',
++              justifyContent: 'center',
++              gap: '2px',
+               textDecoration: 'none',
+-              color: active ? '#7c3aed' : '#555',
++              color: active ? '#fff' : '#777',
+               fontSize: '10px',
+-              fontFamily: "'Space Grotesk', sans-serif",
+-              minWidth: '60px',
++              minWidth: '70px',
++              transition: 'transform 120ms ease',
++              transform: active ? 'translateY(-1px)' : 'none',
+             }}
+           >
+-            {item.icon(active)}
++            <span style={{
++              width: isCreate ? '30px' : '22px',
++              height: isCreate ? '30px' : '22px',
++              borderRadius: '999px',
++              display: 'grid',
++              placeItems: 'center',
++              background: isCreate ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'transparent'
++            }}>
++              {item.icon(active)}
++            </span>
+             {item.label}
+           </Link>
+         )
+       })}
+     </nav>
+   )
+-}
+\ No newline at end of file
++}
+diff --git a/frontend/src/components/Navbar.jsx b/frontend/src/components/Navbar.jsx
+index 7a88502..558bfaa 100644
+--- a/frontend/src/components/Navbar.jsx
++++ b/frontend/src/components/Navbar.jsx
+@@ -3,35 +3,39 @@ import { Link } from 'react-router-dom'
+ export default function Navbar({ chatNotifications = 0 }) {
+   return (
+     <nav style={{
+-      height: '56px',
+-      background: '#0a0a0a',
+-      borderBottom: '1px solid #222',
++      height: '62px',
++      background: 'rgba(8, 8, 12, 0.85)',
++      borderBottom: '1px solid var(--border)',
+       display: 'flex',
+       alignItems: 'center',
+       justifyContent: 'space-between',
+-      padding: '0 20px',
++      padding: '0 14px',
+       position: 'sticky',
+       top: 0,
+       zIndex: 1000,
+-      fontFamily: "'Space Grotesk', sans-serif",
++      backdropFilter: 'blur(10px)',
+     }}>
+-      <Link to="/" style={{ textDecoration: 'none', color: 'var(--accent, #7c3aed)', fontWeight: 700, fontSize: '20px', letterSpacing: '-0.5px' }}>
+-        DUMP
++      <Link to="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column' }}>
++        <span style={{ color: 'var(--accent-light)', fontWeight: 700, fontSize: '24px', letterSpacing: '-0.6px', lineHeight: 1 }}>DUMP</span>
++        <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>drop it. leave lighter.</span>
+       </Link>
+ 
+       <Link to="/chat-requests" style={{
+         textDecoration: 'none',
+-        color: '#888',
++        color: '#c2bdd8',
+         fontSize: '13px',
+         display: 'flex',
+         alignItems: 'center',
+-        gap: '6px',
+-        fontFamily: "'Space Grotesk', sans-serif",
++        gap: '8px',
++        border: '1px solid #38324a',
++        borderRadius: '999px',
++        padding: '7px 12px',
++        background: 'rgba(139, 92, 246, 0.08)'
+       }}>
+         chats
+         {chatNotifications > 0 && (
+           <span style={{
+-            background: '#7c3aed',
++            background: '#8b5cf6',
+             color: '#fff',
+             borderRadius: '999px',
+             fontSize: '10px',
+@@ -44,4 +48,4 @@ export default function Navbar({ chatNotifications = 0 }) {
+       </Link>
+     </nav>
+   )
+-}
+\ No newline at end of file
++}
+diff --git a/frontend/src/components/PostCard.jsx b/frontend/src/components/PostCard.jsx
+index 89560a9..4acca81 100644
+--- a/frontend/src/components/PostCard.jsx
++++ b/frontend/src/components/PostCard.jsx
+@@ -22,55 +22,60 @@ export default function PostCard({ post }) {
+   const navigate = useNavigate();
+ 
+   return (
+-    <div
++    <article
+       onClick={() => navigate(`/post/${post._id}`)}
+       onMouseEnter={() => setHovered(true)}
+       onMouseLeave={() => setHovered(false)}
+       style={{
+         background: hovered ? 'var(--bg-hover)' : 'var(--bg-card)',
+         padding: '20px',
+-        borderRadius: '8px',
++        borderRadius: '12px',
++        border: hovered ? '1px solid #343434' : '1px solid var(--border)',
+         borderLeft: '3px solid var(--accent)',
+         cursor: 'pointer',
+         marginBottom: '1rem',
++        transition: 'transform 160ms ease, border-color 160ms ease, background 160ms ease',
++        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
++        boxShadow: hovered ? '0 10px 25px rgba(0,0,0,0.28)' : 'none',
+       }}
+     >
+       <p
+         style={{
+           color: 'var(--text-primary)',
+           fontSize: '16px',
+-          lineHeight: 1.7,
++          lineHeight: 1.72,
+           marginBottom: '0.5rem',
+         }}
+       >
+         {post.content}
+       </p>
+       {post.imageUrl && (
+-  <img
+-    src={post.imageUrl}
+-    alt="drawing"
+-    style={{
+-      width: '100%',
+-      borderRadius: '6px',
+-      marginTop: '12px',
+-      marginBottom: '4px',
+-      display: 'block',
+-      maxHeight: '300px',
+-      objectFit: 'contain',
+-    }}
+-  />
+-)}
++        <img
++          src={post.imageUrl}
++          alt="drawing"
++          style={{
++            width: '100%',
++            borderRadius: '10px',
++            marginTop: '12px',
++            marginBottom: '8px',
++            display: 'block',
++            maxHeight: '300px',
++            objectFit: 'contain',
++            border: '1px solid var(--border)',
++          }}
++        />
++      )}
+       <div
+         style={{
+           color: 'var(--text-secondary)',
+-          fontSize: '0.875rem',
++          fontSize: '0.82rem',
+           display: 'flex',
+-          gap: '1rem',
++          gap: '0.85rem',
+         }}
+       >
+         <span>{timeAgo(post.createdAt)}</span>
+         <span>{post.replyCount === 1 ? '1 reply' : `${post.replyCount} replies`}</span>
+       </div>
+-    </div>
++    </article>
+   );
+ }
+diff --git a/frontend/src/index.css b/frontend/src/index.css
+index 8d21d17..4babbf2 100644
+--- a/frontend/src/index.css
++++ b/frontend/src/index.css
+@@ -1,7 +1,6 @@
+ @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+ @import "tailwindcss";
+ 
+-
+ * {
+   margin: 0;
+   padding: 0;
+@@ -9,22 +8,25 @@
+ }
+ 
+ :root {
+-  --bg: #0a0a0a;
+-  --bg-card: #111111;
+-  --bg-hover: #1a1a1a;
+-  --accent: #7c3aed;
+-  --accent-light: #a78bfa;
+-  --accent-dim: rgba(124, 58, 237, 0.15);
+-  --text-primary: #ffffff;
+-  --text-secondary: #888888;
+-  --text-muted: #444444;
+-  --border: #222222;
+-  --border-accent: #7c3aed;
++  --bg: #08080b;
++  --bg-elevated: #0f0f12;
++  --bg-card: #121217;
++  --bg-hover: #181821;
++  --accent: #8b5cf6;
++  --accent-light: #c4b5fd;
++  --accent-dim: rgba(139, 92, 246, 0.16);
++  --text-primary: #f8f7ff;
++  --text-secondary: #a4a1b8;
++  --text-muted: #78758a;
++  --border: #252332;
+   --danger: #ef4444;
+ }
+ 
+ body {
+-  background-color: var(--bg);
++  background:
++    radial-gradient(circle at 5% -5%, rgba(139, 92, 246, 0.22), transparent 35%),
++    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.12), transparent 30%),
++    linear-gradient(180deg, #09090c 0%, #07070a 100%);
+   color: var(--text-primary);
+   font-family: 'Space Grotesk', sans-serif;
+   min-height: 100vh;
+@@ -36,19 +38,128 @@ body {
+   color: #fff;
+ }
+ 
+-::-webkit-scrollbar {
+-  width: 4px;
++textarea,
++input,
++button {
++  font-family: 'Space Grotesk', sans-serif;
+ }
+ 
+-::-webkit-scrollbar-track {
+-  background: var(--bg);
++.app-shell {
++  min-height: 100vh;
++  background: transparent;
+ }
+ 
+-::-webkit-scrollbar-thumb {
+-  background: var(--accent);
+-  border-radius: 2px;
++.page-wrap {
++  min-height: 100vh;
++  padding: 88px 1rem 92px;
++  max-width: 760px;
++  margin: 0 auto;
+ }
+ 
+-textarea, input {
+-  font-family: 'Space Grotesk', sans-serif;
+-}
+\ No newline at end of file
++.glass-card {
++  position: relative;
++  background: linear-gradient(170deg, rgba(21, 21, 28, 0.95), rgba(13, 13, 18, 0.94));
++  border: 1px solid var(--border);
++  border-radius: 16px;
++  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.3);
++  overflow: hidden;
++}
++
++.glass-card::before {
++  content: '';
++  position: absolute;
++  inset: 0;
++  background: linear-gradient(120deg, rgba(255, 255, 255, 0.03), transparent 40%);
++  pointer-events: none;
++}
++
++.section-kicker {
++  color: var(--text-muted);
++  font-size: 0.72rem;
++  font-weight: 600;
++  text-transform: uppercase;
++  letter-spacing: 0.16em;
++}
++
++.primary-btn {
++  border: none;
++  border-radius: 11px;
++  padding: 0.76rem 1rem;
++  background: linear-gradient(90deg, #7c3aed, #8b5cf6 50%, #6d28d9);
++  color: white;
++  font-size: 0.92rem;
++  font-weight: 600;
++  cursor: pointer;
++  transition: transform 120ms ease, filter 180ms ease, box-shadow 180ms ease;
++}
++
++.primary-btn:hover {
++  filter: brightness(1.09);
++  transform: translateY(-1px);
++  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.34);
++}
++
++.ghost-btn {
++  border: 1px solid var(--border);
++  border-radius: 11px;
++  padding: 0.72rem 1rem;
++  background: rgba(255, 255, 255, 0.01);
++  color: var(--text-secondary);
++  font-size: 0.9rem;
++  font-weight: 500;
++  cursor: pointer;
++  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
++}
++
++.ghost-btn:hover {
++  color: var(--text-primary);
++  border-color: #3b3752;
++  background: rgba(139, 92, 246, 0.08);
++}
++
++.hero-panel {
++  padding: 1.1rem;
++  margin-bottom: 1rem;
++}
++
++.hero-orb {
++  position: absolute;
++  width: 180px;
++  height: 180px;
++  border-radius: 999px;
++  right: -50px;
++  top: -70px;
++  background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 68%);
++  filter: blur(4px);
++  pointer-events: none;
++}
++
++.info-chips {
++  display: flex;
++  gap: 0.5rem;
++  flex-wrap: wrap;
++}
++
++.info-chip {
++  font-size: 0.72rem;
++  color: var(--accent-light);
++  border: 1px solid rgba(139, 92, 246, 0.38);
++  background: rgba(139, 92, 246, 0.08);
++  border-radius: 999px;
++  padding: 4px 9px;
++}
++
++.fade-up {
++  animation: fadeUp 320ms ease both;
++}
++
++@keyframes fadeUp {
++  from {
++    opacity: 0;
++    transform: translateY(8px);
++  }
++  to {
++    opacity: 1;
++    transform: translateY(0);
++  }
++}
+diff --git a/frontend/src/pages/CreatePost.jsx b/frontend/src/pages/CreatePost.jsx
+index f495af6..c60e2dd 100644
+--- a/frontend/src/pages/CreatePost.jsx
++++ b/frontend/src/pages/CreatePost.jsx
+@@ -6,6 +6,12 @@ import Navbar from '../components/Navbar';
+ import DrawingCanvas from '../components/DrawingCanvas';
+ 
+ const MAX_CHARS = 800;
++const PROMPTS = [
++  'what are you pretending is fine?',
++  'what’s one thing you wish someone understood?',
++  'what is feeling heavy right now?',
++  'what do you need to forgive yourself for?',
++];
+ 
+ export default function CreatePost() {
+   const { anonId } = useAnon();
+@@ -18,18 +24,10 @@ export default function CreatePost() {
+   const charCount = content.length;
+   const isOverWarning = charCount > 750;
+ 
+-  const handleDrawingChange = (blob) => {
+-    setDrawing(blob);
+-  };
+-
+   const handleSubmit = async (e) => {
+     e.preventDefault();
+     if (!content.trim() || loading) return;
+ 
+-    console.log('drawing state:', drawing)
+-    console.log('drawing type:', drawing?.type)
+-    console.log('drawing size:', drawing?.size)
+-
+     const formData = new FormData();
+     formData.append('content', content.trim());
+     formData.append('anonymousId', anonId);
+@@ -53,51 +51,57 @@ export default function CreatePost() {
+   return (
+     <>
+       <Navbar />
+-      <div
+-        style={{
+-          minHeight: '100vh',
+-          background: 'var(--bg)',
+-          padding: '2rem',
+-          paddingTop: '100px',
+-          paddingBottom: '80px',  // added
+-          maxWidth: '640px',
+-          margin: '0 auto',
+-        }}
+-      >
+-        <h1 style={{ color: 'var(--text-primary)', fontSize: '1.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+-          what's on your mind?
+-        </h1>
+-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+-          anonymous. unfiltered. safe.
+-        </p>
++      <main className="page-wrap fade-up">
++        <section className="glass-card" style={{ padding: '1rem', marginBottom: '1rem' }}>
++          <p className="section-kicker" style={{ marginBottom: '6px' }}>new anonymous dump</p>
++          <h1 style={{ color: 'var(--text-primary)', fontSize: '1.4rem', fontWeight: 600, marginBottom: '0.25rem' }}>
++            let it out
++          </h1>
++          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.8rem' }}>
++            no names. no judgement. just honesty.
++          </p>
++
++          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
++            {PROMPTS.map((prompt) => (
++              <button
++                key={prompt}
++                type="button"
++                className="ghost-btn"
++                style={{ fontSize: '0.75rem', padding: '0.42rem 0.62rem' }}
++                onClick={() => setContent((prev) => (prev ? `${prev}\n\n${prompt}` : prompt))}
++              >
++                {prompt}
++              </button>
++            ))}
++          </div>
++        </section>
+ 
+-        <form onSubmit={handleSubmit}>
++        <form onSubmit={handleSubmit} className="glass-card" style={{ padding: '1rem' }}>
+           <textarea
+             value={content}
+             onChange={(e) => setContent(e.target.value.slice(0, MAX_CHARS))}
+             maxLength={MAX_CHARS}
+-            placeholder="Let it all out..."
++            placeholder="Type what you're carrying today..."
+             style={{
+-              background: 'var(--bg-card)',
++              background: '#111119',
+               color: 'var(--text-primary)',
+-              border: 'none',
+-              borderBottom: '2px solid var(--accent)',
++              border: '1px solid var(--border)',
+               padding: '16px',
+-              minHeight: '180px',
++              minHeight: '190px',
+               width: '100%',
+-              fontFamily: "'Space Grotesk', sans-serif",
+               fontSize: '16px',
+-              resize: 'none',
++              resize: 'vertical',
+               outline: 'none',
+-              borderRadius: '4px 4px 0 0',
++              borderRadius: '12px',
++              lineHeight: 1.6,
+             }}
+           />
+-          <div style={{ color: isOverWarning ? 'var(--danger)' : 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'right', marginTop: '0.25rem', marginBottom: '1rem' }}>
++          <div style={{ color: isOverWarning ? 'var(--danger)' : 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'right', marginTop: '0.35rem', marginBottom: '1rem' }}>
+             {charCount} / {MAX_CHARS}
+           </div>
+ 
+-          <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+-            <DrawingCanvas onDrawingChange={handleDrawingChange} />
++          <div style={{ marginBottom: '1rem' }}>
++            <DrawingCanvas onDrawingChange={setDrawing} />
+           </div>
+ 
+           {error && (
+@@ -108,24 +112,18 @@ export default function CreatePost() {
+ 
+           <button
+             type="submit"
++            className="primary-btn"
+             disabled={!content.trim() || loading}
+             style={{
+-              background: !content.trim() || loading ? 'var(--text-muted)' : 'var(--accent)',
+-              color: 'var(--text-primary)',
+               width: '100%',
+-              padding: '14px',
+-              borderRadius: '6px',
+-              border: 'none',
+-              cursor: !content.trim() || loading ? 'not-allowed' : 'pointer',
+               opacity: !content.trim() || loading ? 0.6 : 1,
+-              fontSize: '1rem',
+-              fontWeight: 500,
++              cursor: !content.trim() || loading ? 'not-allowed' : 'pointer',
+             }}
+           >
+-            {loading ? 'dumping...' : 'dump it'}
++            {loading ? 'dumping...' : 'post anonymously'}
+           </button>
+         </form>
+-      </div>
++      </main>
+     </>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/frontend/src/pages/Home.jsx b/frontend/src/pages/Home.jsx
+index bbb1990..958d825 100644
+--- a/frontend/src/pages/Home.jsx
++++ b/frontend/src/pages/Home.jsx
+@@ -1,4 +1,5 @@
+ import { useEffect, useState } from 'react';
++import { Link } from 'react-router-dom';
+ import { getPosts } from '../services/postService';
+ import Navbar from '../components/Navbar';
+ import PostCard from '../components/PostCard';
+@@ -21,94 +22,58 @@ export default function Home() {
+       });
+   }, []);
+ 
+-  if (loading) {
+-    return (
+-      <>
+-        <Navbar />
+-        <div style={{
+-          minHeight: '100vh',
+-          display: 'flex',
+-          alignItems: 'center',
+-          justifyContent: 'center',
+-          background: 'var(--bg)',
+-          color: 'var(--text-muted)',
+-          paddingTop: '80px',
+-          paddingBottom: '80px',
+-        }}>
+-          loading...
+-        </div>
+-      </>
+-    );
+-  }
+-
+-  if (error) {
+-    return (
+-      <>
+-        <Navbar />
+-        <div style={{
+-          minHeight: '100vh',
+-          display: 'flex',
+-          alignItems: 'center',
+-          justifyContent: 'center',
+-          background: 'var(--bg)',
+-          color: 'var(--danger)',
+-          paddingTop: '80px',
+-          paddingBottom: '80px',
+-        }}>
+-          {error}
+-        </div>
+-      </>
+-    );
+-  }
+-
+   return (
+     <>
+       <Navbar />
+-      <div style={{
+-        minHeight: '100vh',
+-        background: 'var(--bg)',
+-        padding: '2rem',
+-        paddingTop: '80px',
+-        paddingBottom: '80px',
+-        maxWidth: '640px',
+-        margin: '0 auto',
+-      }}>
+-        <h2 style={{
+-          color: 'var(--text-muted)',
+-          fontSize: '0.75rem',
+-          fontWeight: 500,
+-          textTransform: 'uppercase',
+-          letterSpacing: '0.15em',
+-          marginBottom: '4px',
+-        }}>
+-          what's everyone dumping
+-        </h2>
+-        <p style={{
+-          color: '#555',
+-          fontSize: '12px',
+-          marginBottom: '1.5rem',
+-          fontFamily: "'Space Grotesk', sans-serif",
+-        }}>
+-          a safe space to dump your thoughts
+-        </p>
+-        {posts.length === 0 ? (
+-          <div style={{
+-            display: 'flex',
+-            alignItems: 'center',
+-            justifyContent: 'center',
+-            minHeight: '200px',
+-            color: 'var(--text-muted)',
+-          }}>
+-            nothing here yet. be the first to dump.
++      <main className="page-wrap fade-up">
++        <section className="glass-card hero-panel">
++          <div className="hero-orb" />
++          <p className="section-kicker" style={{ marginBottom: '8px' }}>anonymous • no signup</p>
++          <h1 style={{ fontSize: '1.5rem', marginBottom: '8px', lineHeight: 1.22, maxWidth: '450px' }}>
++            say what you can't say anywhere else.
++          </h1>
++          <p style={{ color: 'var(--text-secondary)', fontSize: '0.93rem', lineHeight: 1.6, marginBottom: '12px', maxWidth: '540px' }}>
++            DUMP is a quiet corner for heavy thoughts. Write anonymously, read others, and feel less alone.
++          </p>
++          <div className="info-chips" style={{ marginBottom: '12px' }}>
++            <span className="info-chip">no account</span>
++            <span className="info-chip">instant post</span>
++            <span className="info-chip">reply with care</span>
++          </div>
++          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
++            <Link to="/create"><button type="button" className="primary-btn">start dumping</button></Link>
++            <Link to="/my-posts"><button type="button" className="ghost-btn">my dumps</button></Link>
++          </div>
++        </section>
++
++        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
++          <h2 className="section-kicker">latest dumps</h2>
++          <span style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>{loading ? '...' : `${posts.length} posts`}</span>
++        </div>
++
++        {loading && (
++          <div className="glass-card" style={{ padding: '1rem', color: 'var(--text-muted)' }}>
++            loading your safe space...
++          </div>
++        )}
++
++        {!loading && error && (
++          <div className="glass-card" style={{ padding: '1rem', color: 'var(--danger)' }}>
++            {error}
++          </div>
++        )}
++
++        {!loading && !error && posts.length === 0 ? (
++          <div className="glass-card" style={{ padding: '1rem', textAlign: 'center' }}>
++            <p style={{ color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>No dumps yet. Want to start the first one?</p>
++            <Link to="/create"><button type="button" className="primary-btn">write first dump</button></Link>
+           </div>
+         ) : (
+-          <>
+-            {posts.map((post) => (
+-              <PostCard key={post._id} post={post} />
+-            ))}
+-          </>
++          !loading && !error && posts.map((post) => (
++            <PostCard key={post._id} post={post} />
++          ))
+         )}
+-      </div>
++      </main>
+     </>
+   );
+-}
+\ No newline at end of file
++}

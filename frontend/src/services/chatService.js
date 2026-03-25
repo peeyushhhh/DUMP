@@ -28,6 +28,12 @@ export async function declineRequest(requestId, authorId) {
   return data;
 }
 
+// NEW — fetch room metadata (createdAt for accurate 24h timer)
+export async function getRoom(roomId) {
+  const { data } = await axiosInstance.get(`/chat/room/${roomId}`);
+  return data;
+}
+
 export async function getMessages(roomId) {
   const { data } = await axiosInstance.get(`/chat/room/${roomId}/messages`);
   return data;

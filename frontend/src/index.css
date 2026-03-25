@@ -1,6 +1,6 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
-
 
 * {
   margin: 0;
@@ -9,22 +9,25 @@
 }
 
 :root {
-  --bg: #0a0a0a;
-  --bg-card: #111111;
-  --bg-hover: #1a1a1a;
-  --accent: #7c3aed;
-  --accent-light: #a78bfa;
-  --accent-dim: rgba(124, 58, 237, 0.15);
-  --text-primary: #ffffff;
-  --text-secondary: #888888;
-  --text-muted: #444444;
-  --border: #222222;
-  --border-accent: #7c3aed;
+  --bg: #08080b;
+  --bg-elevated: #0f0f12;
+  --bg-card: #121217;
+  --bg-hover: #181821;
+  --accent: #8b5cf6;
+  --accent-light: #c4b5fd;
+  --accent-dim: rgba(139, 92, 246, 0.16);
+  --text-primary: #f8f7ff;
+  --text-secondary: #a4a1b8;
+  --text-muted: #78758a;
+  --border: #252332;
   --danger: #ef4444;
 }
 
 body {
-  background-color: var(--bg);
+  background:
+    radial-gradient(circle at 5% -5%, rgba(139, 92, 246, 0.22), transparent 35%),
+    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.12), transparent 30%),
+    linear-gradient(180deg, #09090c 0%, #07070a 100%);
   color: var(--text-primary);
   font-family: 'Space Grotesk', sans-serif;
   min-height: 100vh;
@@ -36,19 +39,130 @@ body {
   color: #fff;
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 2px;
-}
-
-textarea, input {
+textarea,
+input,
+button {
   font-family: 'Space Grotesk', sans-serif;
 }
+
+.app-shell {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.page-wrap {
+  min-height: 100vh;
+  padding: 88px 1rem 92px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.glass-card {
+  position: relative;
+  background: linear-gradient(170deg, rgba(21, 21, 28, 0.95), rgba(13, 13, 18, 0.94));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.03), transparent 40%);
+  pointer-events: none;
+}
+
+.section-kicker {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.primary-btn {
+  border: none;
+  border-radius: 11px;
+  padding: 0.76rem 1rem;
+  background: linear-gradient(90deg, #7c3aed, #8b5cf6 50%, #6d28d9);
+  color: white;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 180ms ease, box-shadow 180ms ease;
+}
+
+.primary-btn:hover {
+  filter: brightness(1.09);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.34);
+}
+
+.ghost-btn {
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 0.72rem 1rem;
+  background: rgba(255, 255, 255, 0.01);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.ghost-btn:hover {
+  color: var(--text-primary);
+  border-color: #3b3752;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.hero-panel {
+  padding: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.hero-orb {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  right: -50px;
+  top: -70px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 68%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.info-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.info-chip {
+  font-size: 0.72rem;
+  color: var(--accent-light);
+  border: 1px solid rgba(139, 92, 246, 0.38);
+  background: rgba(139, 92, 246, 0.08);
+  border-radius: 999px;
+  padding: 4px 9px;
+}
+
+.fade-up {
+  animation: fadeUp 320ms ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
