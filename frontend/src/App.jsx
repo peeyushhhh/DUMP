@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import AnonProvider from './context/AnonContext'
 import SocketProvider from './context/SocketContext'
 import { useSocketContext } from './context/SocketContext'
@@ -12,6 +12,7 @@ import Chat from './pages/Chat'
 import Therapist from './pages/Therapist'
 import BottomNav from './components/BottomNav'
 import DMInbox from './components/DMInbox'
+import SplashScreen from './components/SplashScreen'
 
 function AppRoutes() {
   const navigate = useNavigate()
@@ -41,24 +42,28 @@ function AppRoutes() {
         <Route path="/chat/:roomId" element={<Chat />} />
         <Route path="/therapist" element={<Therapist />} />
       </Routes>
-
-      {/* Global DM inbox bubble — always mounted, hides itself on chat pages */}
       <DMInbox />
-
       {showBottomNav && <BottomNav />}
     </div>
   )
 }
 
 function App() {
+  const [splashDone, setSplashDone] = useState(false)
+
   return (
-    <BrowserRouter>
-      <AnonProvider>
-        <SocketProvider>
-          <AppRoutes />
-        </SocketProvider>
-      </AnonProvider>
-    </BrowserRouter>
+    <>
+      {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
+      {splashDone && (
+        <BrowserRouter>
+          <AnonProvider>
+            <SocketProvider>
+              <AppRoutes />
+            </SocketProvider>
+          </AnonProvider>
+        </BrowserRouter>
+      )}
+    </>
   )
 }
 
