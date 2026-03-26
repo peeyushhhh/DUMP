@@ -11,6 +11,7 @@ const chatRoutes = require('./routes/chatRoutes')
 const therapistRoutes = require('./routes/therapistRoutes')
 
 const app = express()
+app.set('trust proxy', 1)
 
 // ── CORS ──────────────────────────────────────────────────────
 const allowedOrigins = [
