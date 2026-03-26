@@ -2,7 +2,6 @@ const express = require('express')
 const helmet = require('helmet')
 const cors = require('cors')
 const rateLimit = require('express-rate-limit')
-const mongoSanitize = require('express-mongo-sanitize')
 const xss = require('xss-clean')
 const requestId = require('./middleware/requestId')
 const errorHandler = require('./middleware/errorHandler')
@@ -35,7 +34,25 @@ app.use(cors({
 // ── Body parsing + sanitization ───────────────────────────────
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '5mb' }))
-app.use(mongoSanitize())
+
+// Manual mongo sanitize (replaces express-mongo-sanitize, incompatible with Express v5)
+const sanitize = (obj) => {
+  if (obj && typeof obj === 'object') {
+    Object.keys(obj).forEach(key => {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete obj[key]
+      } else {
+        sanitize(obj[key])
+      }
+    })
+  }
+}
+app.use((req, res, next) => {
+  sanitize(req.body)
+  sanitize(req.params)
+  next()
+})
+
 app.use(xss())
 app.use(requestId)
 
