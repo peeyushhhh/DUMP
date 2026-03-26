@@ -2,7 +2,6 @@ const express = require('express')
 const helmet = require('helmet')
 const cors = require('cors')
 const rateLimit = require('express-rate-limit')
-const xss = require('xss-clean')
 const requestId = require('./middleware/requestId')
 const errorHandler = require('./middleware/errorHandler')
 const postRoutes = require('./routes/postRoutes')
@@ -53,7 +52,6 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use(xss())
 app.use(requestId)
 
 // ── Rate limiters ─────────────────────────────────────────────
