@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getPosts } from '../services/postService'
 import { useSocketContext } from '../context/SocketContext'
+import { useIsMobile } from '../hooks/useIsMobile'
 import Navbar from '../components/Navbar'
 import PostCard from '../components/PostCard'
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react'
@@ -40,6 +41,7 @@ export default function Home() {
   const [error, setError] = useState(null)
   const navigate = useNavigate()
   const { socket } = useSocketContext()
+  const isMobile = useIsMobile()
 
   const loadFeed = useCallback(async ({ initial = false, showSpinner = false } = {}) => {
     if (showSpinner) setRefreshing(true)
@@ -197,9 +199,9 @@ export default function Home() {
       <div style={{
         minHeight: '100vh',
         background: 'var(--bg)',
-        padding: '2rem',
-        paddingTop: '80px',
-        paddingBottom: '80px',
+        padding: isMobile ? '12px' : '2rem',
+        paddingTop: isMobile ? '72px' : '80px',
+        paddingBottom: isMobile ? '80px' : '80px',
         maxWidth: '640px',
         margin: '0 auto',
         position: 'relative',
@@ -207,7 +209,11 @@ export default function Home() {
       }}>
 
         {/* Hero */}
-        <div style={{ marginBottom: '3rem' }}>
+        <div style={{
+          marginBottom: isMobile ? '1.5rem' : '3rem',
+          paddingTop: isMobile ? '24px' : undefined,
+          paddingBottom: isMobile ? '24px' : undefined,
+        }}>
           <p style={{
             fontSize: '0.65rem',
             fontWeight: 700,
@@ -220,7 +226,7 @@ export default function Home() {
             anonymous · unfiltered · yours
           </p>
           <h1 style={{
-            fontSize: 'clamp(1.9rem, 5vw, 2.6rem)',
+            fontSize: isMobile ? '2rem' : 'clamp(1.9rem, 5vw, 2.6rem)',
             fontWeight: 800,
             fontStyle: 'italic',
             lineHeight: 1.2,
@@ -230,15 +236,17 @@ export default function Home() {
             <span style={{ color: 'var(--text-primary)' }}>say it. </span>
             <span style={{ color: '#8b5cf6' }}>no one's watching.</span>
           </h1>
-          <p style={{
-            color: 'var(--text-muted)',
-            fontSize: '0.82rem',
-            lineHeight: 1.6,
-            maxWidth: '340px',
-            opacity: 0.7,
-          }}>
-            this is your void. scream into it.
-          </p>
+          {!isMobile && (
+            <p style={{
+              color: 'var(--text-muted)',
+              fontSize: '0.82rem',
+              lineHeight: 1.6,
+              maxWidth: '340px',
+              opacity: 0.7,
+            }}>
+              this is your void. scream into it.
+            </p>
+          )}
         </div>
 
         {/* Feed header */}

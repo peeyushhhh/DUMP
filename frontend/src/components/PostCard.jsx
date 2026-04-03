@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MessageCircle, Clock } from 'lucide-react'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 function timeAgo(dateStr) {
   const date = new Date(dateStr)
@@ -30,6 +31,7 @@ const MOOD_COLOR = {
 export default function PostCard({ post }) {
   const [hovered, setHovered] = useState(false)
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const moodEmoji = post.mood ? MOOD_EMOJI[post.mood] : null
   const moodColor = post.mood ? MOOD_COLOR[post.mood] : '#8b5cf6'
 
@@ -40,7 +42,7 @@ export default function PostCard({ post }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         position: 'relative',
-        padding: '18px 20px',
+        padding: isMobile ? '16px' : '18px 20px',
         borderRadius: '10px',
         cursor: 'pointer',
         marginBottom: '0.85rem',
@@ -65,7 +67,7 @@ export default function PostCard({ post }) {
 
       <p style={{
         color: 'var(--text-primary)',
-        fontSize: '15px',
+        fontSize: isMobile ? '14px' : '15px',
         lineHeight: 1.7,
         marginBottom: '0.6rem',
         position: 'relative',
@@ -80,7 +82,9 @@ export default function PostCard({ post }) {
           style={{
             width: '100%', borderRadius: '6px',
             marginTop: '12px', marginBottom: '4px',
-            display: 'block', maxHeight: '300px', objectFit: 'contain',
+            display: 'block',
+            maxHeight: isMobile ? '180px' : '300px',
+            objectFit: isMobile ? 'cover' : 'contain',
           }}
         />
       )}
