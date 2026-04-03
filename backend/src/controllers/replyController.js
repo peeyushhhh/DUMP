@@ -1,4 +1,4 @@
-const { detectMood, checkToxicity, getReplysuggestions: fetchSuggestions } = require('../services/aiService');
+const { detectMood, checkToxicity, getReplySuggestions: fetchSuggestions } = require('../services/aiService');
 const Reply = require('../models/Reply');
 const Post = require('../models/Post');
 const asyncHandler = require('../utils/asyncHandler');

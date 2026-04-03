@@ -183,7 +183,7 @@ export default function MyPosts() {
   useEffect(() => {
     getPosts(1, 50)
       .then((res) => {
-        const all = res.data?.posts ?? []
+        const all = res.data?.data?.posts ?? res.data?.posts ?? []
         setPosts(all.filter((p) => p.anonymousId === anonId))
       })
       .catch((err) => setError(err.response?.data?.error ?? err.message))

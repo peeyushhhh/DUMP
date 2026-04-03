@@ -40,6 +40,19 @@ function initializeSockets(io) {
       io.to(roomId.toString()).emit('receive_message', message);
     });
 
+    // Typing indicators
+    socket.on('typing', ({ roomId, userId } = {}) => {
+      if (!roomId || !userId) return;
+      // Broadcast to other room members (exclude sender)
+      socket.to(roomId.toString()).emit('user_typing', { roomId, userId });
+    });
+
+    socket.on('stop_typing', ({ roomId, userId } = {}) => {
+      if (!roomId || !userId) return;
+      // Broadcast to other room members (exclude sender)
+      socket.to(roomId.toString()).emit('user_stop_typing', { roomId, userId });
+    });
+
     socket.on('disconnect', () => {
       console.log('socket disconnected:', socket.id);
     });

@@ -1,8 +1,11 @@
-const { detectMood, checkToxicity, getReplysuggestions: fetchSuggestions } = require('../services/aiService');
+const { detectMood, checkToxicity, getReplySuggestions: fetchSuggestions } = require('../services/aiService');
 const Post = require('../models/Post');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/responseFormatter');
 const { uploadImage } = require('../services/cloudinaryService');
+const { emitNewPost } = require('../sockets/io');
+
+const PINNED_ID = "69c52eb2e7b0e4d16f553786";
 
 const createPost = asyncHandler(async (req, res) => {
   console.log('req.file:', req.file);
@@ -13,22 +16,20 @@ const createPost = asyncHandler(async (req, res) => {
     return sendError(res, 'Content and anonymousId are required', 400);
   }
 
-  // ── AI: Toxicity check (runs before anything else) ──────────────
   const { toxic, borderline } = await checkToxicity(content);
   if (toxic) {
     return sendError(res, "Your post couldn't be shared. It may contain harmful content.", 400);
   }
 
-  // ── AI: Mood detection ──────────────────────────────────────────
   const mood = await detectMood(content);
 
-  // ── Image upload ────────────────────────────────────────────────
   let imageUrl = null;
   if (req.file) {
     imageUrl = await uploadImage(req.file.buffer, req.file.mimetype);
   }
 
   const post = await Post.create({ content, anonymousId, imageUrl, mood, flagged: borderline });
+  emitNewPost(post);
   return sendSuccess(res, { post }, 'Post created', 201);
 });
 
@@ -41,6 +42,18 @@ const getPosts = asyncHandler(async (req, res) => {
     Post.countDocuments(),
     Post.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
   ]);
+
+  if (page === 1) {
+    const pinnedIndex = posts.findIndex(p => p._id.toString() === PINNED_ID);
+
+    if (pinnedIndex > 0) {
+      const [pinned] = posts.splice(pinnedIndex, 1);
+      posts.unshift(pinned);
+    } else if (pinnedIndex === -1) {
+      const pinned = await Post.findById(PINNED_ID).lean();
+      if (pinned) posts.unshift(pinned);
+    }
+  }
 
   return sendSuccess(res, {
     total,
@@ -79,7 +92,6 @@ const deletePost = asyncHandler(async (req, res) => {
   return sendSuccess(res, {}, 'Post deleted successfully');
 });
 
-// ── GET /api/v1/posts/:id/suggestions ───────────────────────────────
 const getReplysuggestions = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

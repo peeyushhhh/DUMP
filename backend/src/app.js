@@ -61,6 +61,7 @@ const globalLimiter = rateLimit({
   max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'development',
   message: { success: false, message: 'Too many requests, please try again later.' },
 })
 

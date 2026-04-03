@@ -1,22 +1,103 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getPosts } from '../services/postService'
+import { useSocketContext } from '../context/SocketContext'
 import Navbar from '../components/Navbar'
 import PostCard from '../components/PostCard'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+
+const PAGE_LIMIT = 10
+
+function parseFeedResponse(res) {
+  const data = res.data?.data ?? res.data ?? {}
+  const list = data.posts ?? []
+  const pagination = data.pagination ?? res.data?.pagination
+
+  let hasNext
+  if (pagination && typeof pagination.hasNextPage === 'boolean') {
+    hasNext = pagination.hasNextPage
+  } else if (
+    typeof data.total === 'number'
+    && typeof data.page === 'number'
+    && typeof data.limit === 'number'
+  ) {
+    const skip = (data.page - 1) * data.limit
+    hasNext = skip + list.length < data.total
+  } else {
+    hasNext = list.length >= PAGE_LIMIT
+  }
+
+  return { list, hasNext }
+}
 
 export default function Home() {
   const [posts, setPosts] = useState([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
+  const { socket } = useSocketContext()
+
+  const loadFeed = useCallback(async ({ initial = false, showSpinner = false } = {}) => {
+    if (showSpinner) setRefreshing(true)
+    try {
+      const res = await getPosts(1, PAGE_LIMIT)
+      const { list, hasNext } = parseFeedResponse(res)
+      setPosts(list)
+      setPage(1)
+      setHasMore(hasNext)
+      setError(null)
+    } catch (err) {
+      setError(err.response?.data?.error ?? err.message ?? 'Failed to load posts')
+    } finally {
+      if (initial) setLoading(false)
+      if (showSpinner) setRefreshing(false)
+    }
+  }, [])
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return
+    setLoadingMore(true)
+    try {
+      const nextPage = page + 1
+      const res = await getPosts(nextPage, PAGE_LIMIT)
+      const { list, hasNext } = parseFeedResponse(res)
+      setPosts((prev) => [...prev, ...list])
+      setPage(nextPage)
+      setHasMore(hasNext)
+    } catch (err) {
+      setError(err.response?.data?.error ?? err.message ?? 'Failed to load posts')
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [page, hasMore, loadingMore])
 
   useEffect(() => {
-    getPosts(1, 10)
-      .then((res) => setPosts(res.data?.posts ?? []))
-      .catch((err) => setError(err.response?.data?.error ?? err.message ?? 'Failed to load posts'))
-      .finally(() => setLoading(false))
-  }, [])
+    loadFeed({ initial: true })
+  }, [loadFeed])
+
+  useEffect(() => {
+    const sock = socket?.current
+    if (!sock) return
+    const onNewPost = () => {
+      loadFeed()
+    }
+    sock.on('new_post', onNewPost)
+    return () => sock.off('new_post', onNewPost)
+  }, [socket, loadFeed])
+
+  // Fallback when socket `new_post` is missed (silent — no full-page or refresh spinner)
+  useEffect(() => {
+    const id = setInterval(() => {
+      loadFeed()
+    }, 30_000)
+    return () => clearInterval(id)
+  }, [loadFeed])
+
+  const handleRefresh = () => loadFeed({ showSpinner: true })
 
   if (loading) {
     return (
@@ -86,6 +167,9 @@ export default function Home() {
           flex: 1;
           border: none;
           border-top: 1px solid rgba(139,92,246,0.15);
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
 
@@ -160,6 +244,35 @@ export default function Home() {
         {/* Feed header */}
         <div className="feed-divider">
           <span>recent dumps</span>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label="Refresh feed"
+            title="Refresh feed"
+            style={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              border: '1px solid rgba(139,92,246,0.25)',
+              background: 'rgba(139,92,246,0.08)',
+              color: 'var(--text-muted)',
+              cursor: refreshing ? 'wait' : 'pointer',
+              opacity: refreshing ? 0.7 : 1,
+              transition: 'opacity 0.15s, border-color 0.15s',
+            }}
+          >
+            <RefreshCw
+              size={14}
+              style={{
+                animation: refreshing ? 'spin 0.8s linear infinite' : 'none',
+              }}
+            />
+          </button>
           <hr />
         </div>
 
@@ -175,6 +288,32 @@ export default function Home() {
           </div>
         ) : (
           posts.map((post) => <PostCard key={post._id} post={post} />)
+        )}
+
+        {hasMore && (
+          <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="ghost-btn"
+              style={{
+                fontSize: '0.85rem',
+                minWidth: '140px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: loadingMore ? 'wait' : 'pointer',
+                opacity: loadingMore ? 0.85 : 1,
+              }}
+            >
+              {loadingMore && (
+                <Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />
+              )}
+              load more
+            </button>
+          </div>
         )}
       </div>
 

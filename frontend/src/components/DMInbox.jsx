@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSocketContext } from '../context/SocketContext';
 
@@ -18,6 +18,8 @@ export default function DMInbox() {
   const location = useLocation();
   const { activeRooms, removeRoom, notifications } = useSocketContext();
   const [open, setOpen] = useState(false);
+  const panelRef = useRef(null);
+  const toggleRef = useRef(null);
 
   // Don't render on chat page itself — already visible
   const onChatPage = location.pathname.startsWith('/chat/');
@@ -26,6 +28,36 @@ export default function DMInbox() {
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
+
+  // Close on outside click and Escape
+  useEffect(() => {
+    if (!open) return;
+
+    const handleMouseDown = (event) => {
+      const panelEl = panelRef.current;
+      const toggleEl = toggleRef.current;
+      if (!panelEl || !toggleEl) return;
+
+      const target = event.target;
+      if (panelEl.contains(target) || toggleEl.contains(target)) return;
+
+      setOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' || event.key === 'Esc') {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
 
   if (activeRooms.length === 0) return null;
 
@@ -37,6 +69,7 @@ export default function DMInbox() {
       {/* Floating bubble */}
       {!onChatPage && (
         <button
+          ref={toggleRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
           style={{
@@ -107,6 +140,7 @@ export default function DMInbox() {
 
           {/* Panel */}
           <div
+            ref={panelRef}
             style={{
               position: 'fixed',
               bottom: '152px',

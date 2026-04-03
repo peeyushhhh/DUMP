@@ -107,7 +107,7 @@ Reply with only the JSON. No explanation, no markdown, no code fences.
 }
 
 // ─── Reply Suggestions ────────────────────────────────────────────
-async function getReplysuggestions(postText, mood) {
+async function getReplySuggestions(postText, mood) {
   const prompt = `
 You are an empathetic companion in an anonymous emotional support app used by Gen Z and millennials.
 A user posted the following with a detected mood of "${mood}".
@@ -182,4 +182,4 @@ async function chatWithTherapist(messages) {
   }
 }
 
-module.exports = { detectMood, checkToxicity, getReplysuggestions, chatWithTherapist };
+module.exports = { detectMood, checkToxicity, getReplySuggestions, chatWithTherapist };

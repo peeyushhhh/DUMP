@@ -25,8 +25,27 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [otherTyping, setOtherTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const lastTypingEmitAtRef = useRef(0);
+  const hasInteractedRef = useRef(false);
+  const otherTypingExpireRef = useRef(null);
+
+  const clearOtherTypingExpire = () => {
+    if (otherTypingExpireRef.current) {
+      clearTimeout(otherTypingExpireRef.current);
+      otherTypingExpireRef.current = null;
+    }
+  };
+
+  const scheduleOtherTypingExpire = () => {
+    clearOtherTypingExpire();
+    otherTypingExpireRef.current = setTimeout(() => {
+      otherTypingExpireRef.current = null;
+      setOtherTyping(false);
+    }, 3000);
+  };
 
   const roomMeta = activeRooms.find((r) => r.roomId === roomId);
   const tl = roomMeta ? timeLeft(roomMeta.createdAt) : null;
@@ -66,13 +85,79 @@ export default function Chat() {
 
     const handleReceiveMessage = (message) => {
       if (message.roomId && message.roomId.toString() !== roomId) return;
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        // Optimistic UI: replace the pending message we already rendered
+        const pendingIndex = prev.findIndex(
+          (m) => m?.pending
+            && m.senderId === message.senderId
+            && m.text === message.text
+        );
+
+        if (pendingIndex !== -1) {
+          const next = [...prev];
+          next[pendingIndex] = { ...message, pending: false };
+          return next;
+        }
+
+        return [...prev, message];
+      });
+
       updateRoomLastMessage(roomId, message.text);
     };
 
+    const handleUserTyping = ({ roomId: incomingRoomId, userId } = {}) => {
+      if (incomingRoomId && incomingRoomId.toString() !== roomId) return;
+      if (userId && userId === anonId) return;
+      setOtherTyping(true);
+      scheduleOtherTypingExpire();
+    };
+
+    const handleUserStopTyping = ({ roomId: incomingRoomId, userId } = {}) => {
+      if (incomingRoomId && incomingRoomId.toString() !== roomId) return;
+      if (userId && userId === anonId) return;
+      clearOtherTypingExpire();
+      setOtherTyping(false);
+    };
+
     sock.on('receive_message', handleReceiveMessage);
-    return () => sock.off('receive_message', handleReceiveMessage);
-  }, [socket, roomId]);
+    sock.on('user_typing', handleUserTyping);
+    sock.on('user_stop_typing', handleUserStopTyping);
+    return () => {
+      clearOtherTypingExpire();
+      sock.off('receive_message', handleReceiveMessage);
+      sock.off('user_typing', handleUserTyping);
+      sock.off('user_stop_typing', handleUserStopTyping);
+    };
+  }, [socket, roomId, anonId]);
+
+  // Clear typing UI when switching rooms / expiring
+  useEffect(() => {
+    clearOtherTypingExpire();
+    setOtherTyping(false);
+    lastTypingEmitAtRef.current = 0;
+  }, [roomId, isExpired]);
+
+  // Typing emits (throttled: once per 2 seconds while user is typing)
+  useEffect(() => {
+    if (isExpired) return;
+    if (!roomId) return;
+    const sock = socket?.current;
+    if (!sock) return;
+    if (!hasInteractedRef.current) return;
+
+    const trimmed = text.trim();
+    if (!trimmed) {
+      lastTypingEmitAtRef.current = 0;
+      sock.emit('stop_typing', { roomId, userId: anonId });
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastTypingEmitAtRef.current >= 2000) {
+      lastTypingEmitAtRef.current = now;
+      sock.emit('typing', { roomId, userId: anonId });
+    }
+  }, [text, isExpired, roomId, anonId, socket]);
 
   useEffect(() => { scrollToBottom(); }, [messages]);
   useEffect(() => { markRoomRead(roomId); }, [roomId, messages.length]);
@@ -82,10 +167,32 @@ export default function Chat() {
     const trimmed = text.trim();
     if (!trimmed || trimmed.length > 300 || isExpired) return;
     const sock = socket?.current;
+
     if (sock) {
+      // Optimistic message so the user sees it instantly.
+      const tempId = (() => {
+        try {
+          return `temp-${crypto.randomUUID()}`;
+        } catch {
+          return `temp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+      })();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          _id: tempId,
+          roomId,
+          senderId: anonId,
+          text: trimmed,
+          pending: true,
+        },
+      ]);
+
       sock.emit('send_message', { roomId, senderId: anonId, text: trimmed });
       updateRoomLastMessage(roomId, trimmed);
     }
+
     setText('');
     if (inputRef.current) inputRef.current.style.height = 'auto';
     inputRef.current?.focus();
@@ -117,6 +224,12 @@ export default function Chat() {
     <>
       <Navbar />
       <main className="page-wrap fade-up" style={{ paddingBottom: '80px' }}>
+        <style>{`
+          @keyframes typingPulse {
+            0%, 100% { opacity: 0.35; transform: translateY(0px); }
+            50% { opacity: 0.95; transform: translateY(-1px); }
+          }
+        `}</style>
 
         {/* Sticky header */}
         <section style={{
@@ -228,6 +341,7 @@ export default function Chat() {
                   border: isYou ? 'none' : '1px solid var(--border)',
                   boxShadow: isYou ? '0 4px 16px rgba(124,58,237,0.3)' : 'none',
                   wordBreak: 'break-word',
+                  opacity: msg.pending ? 0.6 : 1,
                 }}>
                   {msg.text}
                 </div>
@@ -239,6 +353,56 @@ export default function Chat() {
       </main>
 
       {/* Input bar */}
+      {!isExpired && otherTyping && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '60px',
+            left: 0,
+            right: 0,
+            zIndex: 5,
+            pointerEvents: 'none',
+            maxWidth: '760px',
+            margin: '0 auto',
+            padding: '0 16px',
+          }}
+        >
+          <div
+            style={{
+              width: 'fit-content',
+              marginLeft: 'auto',
+              background: 'rgba(8,8,12,0.7)',
+              border: '1px solid rgba(139,92,246,0.2)',
+              borderRadius: '999px',
+              padding: '6px 10px',
+              color: 'var(--text-muted)',
+              fontSize: '0.78rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <span style={{ opacity: 0.9 }}>typing</span>
+            <span style={{ display: 'inline-flex', gap: '4px' }}>
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: '4px',
+                    height: '4px',
+                    borderRadius: '50%',
+                    background: 'var(--accent)',
+                    opacity: 0.35,
+                    animation: `typingPulse 1.1s ease-in-out ${i * 0.15}s infinite`,
+                  }}
+                />
+              ))}
+            </span>
+          </div>
+        </div>
+      )}
+
       {!isExpired && (
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
@@ -255,6 +419,7 @@ export default function Chat() {
               ref={inputRef}
               value={text}
               onChange={(e) => {
+                hasInteractedRef.current = true;
                 setText(e.target.value.slice(0, 300));
                 e.target.style.height = 'auto';
                 e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
