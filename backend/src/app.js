@@ -11,6 +11,7 @@ const chatRoutes = require('./routes/chatRoutes')
 const therapistRoutes = require('./routes/therapistRoutes')
 const notificationRoutes = require('./routes/notificationRoutes')
 const pushRoutes = require('./routes/pushRoutes')
+const recoveryRoutes = require('./routes/recoveryRoutes')
 
 
 const app = express()
@@ -59,12 +60,15 @@ app.use((req, res, next) => {
 app.use(requestId)
 
 // ── Rate limiters ─────────────────────────────────────────────
+const skipRateLimitInDev = (req) => process.env.NODE_ENV === 'development'
+
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'development' ? 999999 : 1000,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests, please try again later.' },
+  skip: skipRateLimitInDev,
 })
 
 const therapistChatLimiter = rateLimit({
@@ -73,6 +77,7 @@ const therapistChatLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'AI chat limit reached, please wait before sending more messages.' },
+  skip: skipRateLimitInDev,
 })
 
 const createPostLimiter = rateLimit({
@@ -81,6 +86,7 @@ const createPostLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Post limit reached, please slow down.' },
+  skip: skipRateLimitInDev,
 })
 
 app.use(globalLimiter)
@@ -98,6 +104,7 @@ app.use('/api/v1/chat', chatRoutes)
 app.use('/api/v1/therapist', therapistChatLimiter, therapistRoutes)
 app.use('/api/v1/notifications', notificationRoutes)
 app.use('/api/v1/push', pushRoutes)
+app.use('/api/v1/recovery', recoveryRoutes)
 
 app.use(errorHandler)
 

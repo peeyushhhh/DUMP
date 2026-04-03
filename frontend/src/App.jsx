@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import AnonProvider, { useAnon } from './context/AnonContext'
 import SocketProvider from './context/SocketContext'
 import { useSocketContext } from './context/SocketContext'
@@ -14,6 +14,13 @@ import Therapist from './pages/Therapist'
 import BottomNav from './components/BottomNav'
 import DMInbox from './components/DMInbox'
 import SplashScreen from './components/SplashScreen'
+import RecoveryModal from './components/RecoveryModal'
+
+function RecoveryModalHost() {
+  const { showRecoveryModal } = useAnon()
+  if (!showRecoveryModal) return null
+  return <RecoveryModal />
+}
 
 function PushBootstrap() {
   const { anonId } = useAnon()
@@ -66,17 +73,35 @@ function AppRoutes() {
   )
 }
 
+const SPLASH_SEEN_KEY = 'dump_splash_seen'
+
 function App() {
-  const [splashDone, setSplashDone] = useState(false)
+  const [splashDone, setSplashDone] = useState(() => {
+    try {
+      return localStorage.getItem(SPLASH_SEEN_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const finishSplash = useCallback(() => {
+    try {
+      localStorage.setItem(SPLASH_SEEN_KEY, 'true')
+    } catch {
+      /* ignore */
+    }
+    setSplashDone(true)
+  }, [])
 
   return (
     <>
-      {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
+      {!splashDone && <SplashScreen onComplete={finishSplash} />}
       {splashDone && (
         <BrowserRouter>
           <AnonProvider>
             <SocketProvider>
               <PushBootstrap />
+              <RecoveryModalHost />
               <AppRoutes />
             </SocketProvider>
           </AnonProvider>

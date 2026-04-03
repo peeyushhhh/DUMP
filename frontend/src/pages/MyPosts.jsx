@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAnon } from '../context/AnonContext'
 import { getPosts, deletePost } from '../services/postService'
 import Navbar from '../components/Navbar'
+import RecoverIdentityForm from '../components/RecoverIdentityForm'
 
 function timeAgo(dateStr) {
   const date = new Date(dateStr)
@@ -178,6 +179,7 @@ export default function MyPosts() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [showRecoverForm, setShowRecoverForm] = useState(false)
   const emptyLine = useRef(EMPTY_LINES[Math.floor(Math.random() * EMPTY_LINES.length)])
 
   useEffect(() => {
@@ -228,6 +230,32 @@ export default function MyPosts() {
           paddingBottom: '1.5rem',
           borderBottom: '1px solid var(--border)',
         }}>
+          {!loading && posts.length === 0 && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              {!showRecoverForm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowRecoverForm(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '0.78rem',
+                    color: 'var(--text-muted)',
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                    cursor: 'pointer',
+                    fontFamily: "'Space Grotesk', sans-serif",
+                  }}
+                >
+                  Recover identity
+                </button>
+              ) : (
+                <RecoverIdentityForm />
+              )}
+            </div>
+          )}
+
           <p style={{
             fontSize: '0.65rem',
             fontWeight: 700,
