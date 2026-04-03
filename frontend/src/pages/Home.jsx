@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { getPosts } from '../services/postService'
 import { useSocketContext } from '../context/SocketContext'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -39,7 +38,6 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
-  const navigate = useNavigate()
   const { socket } = useSocketContext()
   const isMobile = useIsMobile()
 
@@ -108,7 +106,9 @@ export default function Home() {
         <div style={{
           minHeight: '100vh', display: 'flex', alignItems: 'center',
           justifyContent: 'center', background: 'var(--bg)',
-          color: 'var(--text-muted)', paddingTop: '80px', paddingBottom: '80px',
+          color: 'var(--text-muted)',
+          paddingTop: isMobile ? '60px' : '80px',
+          paddingBottom: '80px',
           flexDirection: 'column', gap: '10px',
         }}>
           <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
@@ -125,7 +125,9 @@ export default function Home() {
         <div style={{
           minHeight: '100vh', display: 'flex', alignItems: 'center',
           justifyContent: 'center', background: 'var(--bg)',
-          color: 'var(--danger)', paddingTop: '80px', paddingBottom: '80px',
+          color: 'var(--danger)',
+          paddingTop: isMobile ? '60px' : '80px',
+          paddingBottom: '80px',
           flexDirection: 'column', gap: '8px',
         }}>
           <AlertCircle size={20} />
@@ -200,7 +202,7 @@ export default function Home() {
         minHeight: '100vh',
         background: 'var(--bg)',
         padding: isMobile ? '12px' : '2rem',
-        paddingTop: isMobile ? '72px' : '80px',
+        paddingTop: isMobile ? '60px' : '80px',
         paddingBottom: isMobile ? '80px' : '80px',
         maxWidth: '640px',
         margin: '0 auto',
@@ -210,7 +212,7 @@ export default function Home() {
 
         {/* Hero */}
         <div style={{
-          marginBottom: isMobile ? '1.5rem' : '3rem',
+          marginBottom: isMobile ? '0.65rem' : '3rem',
           paddingTop: isMobile ? '24px' : undefined,
           paddingBottom: isMobile ? '24px' : undefined,
         }}>
@@ -226,7 +228,7 @@ export default function Home() {
             anonymous · unfiltered · yours
           </p>
           <h1 style={{
-            fontSize: isMobile ? '2rem' : 'clamp(1.9rem, 5vw, 2.6rem)',
+            fontSize: isMobile ? '1.5rem' : 'clamp(1.9rem, 5vw, 2.6rem)',
             fontWeight: 800,
             fontStyle: 'italic',
             lineHeight: 1.2,
@@ -250,7 +252,10 @@ export default function Home() {
         </div>
 
         {/* Feed header */}
-        <div className="feed-divider">
+        <div
+          className="feed-divider"
+          style={isMobile ? { marginBottom: '0.5rem' } : undefined}
+        >
           <span>recent dumps</span>
           <button
             type="button"
@@ -324,32 +329,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {/* Therapist FAB */}
-      <button
-        onClick={() => navigate('/therapist')}
-        title="talk to your therapist"
-        style={{
-          position: 'fixed', bottom: '76px', left: '16px',
-          width: '48px', height: '48px', borderRadius: '50%',
-          border: '1px solid #3d1a1a',
-          background: 'linear-gradient(135deg, #1a0f0f, #2a1010)',
-          color: '#f97316', fontSize: '20px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 999, boxShadow: '0 0 16px rgba(194,65,12,0.25)',
-          transition: 'transform 0.2s, box-shadow 0.2s',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'scale(1.1)'
-          e.currentTarget.style.boxShadow = '0 0 28px rgba(194,65,12,0.5)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'scale(1)'
-          e.currentTarget.style.boxShadow = '0 0 16px rgba(194,65,12,0.25)'
-        }}
-      >
-        🛋️
-      </button>
     </>
   )
 }

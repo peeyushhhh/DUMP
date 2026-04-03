@@ -60,6 +60,13 @@ export function AnonProvider({ children }) {
     }
   }, []);
 
+  const requestNewRecoveryCode = useCallback(() => {
+    localStorage.removeItem('dump_recovery_set');
+    setRecoverySetUp(false);
+    setGeneratedPassphrase(generatePassphrase());
+    setShowRecoveryModal(true);
+  }, []);
+
   const value = {
     anonId,
     showRecoveryModal,
@@ -68,6 +75,7 @@ export function AnonProvider({ children }) {
     recoverySetUp,
     confirmSavePassphrase,
     recoverIdentity,
+    requestNewRecoveryCode,
   };
 
   return (

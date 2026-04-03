@@ -1,42 +1,41 @@
 import { Link } from 'react-router-dom'
-import { useSocketContext } from '../context/SocketContext'
-import { PlusCircle, User, MessageCircle } from 'lucide-react'
+import { Settings } from 'lucide-react'
+import { useIsMobile } from '../hooks/useIsMobile'
 import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
-  const { notifications } = useSocketContext()
+  const isMobile = useIsMobile()
 
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 2100,
-      height: '56px', background: 'var(--bg)',
+      height: isMobile ? '52px' : '56px',
+      background: 'var(--bg)',
       borderBottom: '1px solid var(--border)',
       display: 'flex', alignItems: 'center',
-      justifyContent: 'space-between', padding: '0 24px',
+      justifyContent: 'space-between',
+      padding: isMobile ? '0 12px' : '0 24px',
     }}>
-      <Link to="/" style={{ color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 700, fontSize: '18px', letterSpacing: '4px' }}>
+      <Link to="/" style={{
+        color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 700,
+        fontSize: isMobile ? '16px' : '18px',
+        letterSpacing: isMobile ? '3px' : '4px',
+      }}>
         DUMP
       </Link>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        gap: isMobile ? '12px' : '20px',
+      }}>
         <NotificationBell />
-        <Link to="/create" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <PlusCircle size={15} /> dump it
-        </Link>
-        <Link to="/my-posts" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <User size={15} /> my dumps
-        </Link>
-        <Link to="/chat-requests" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px', position: 'relative' }}>
-          <MessageCircle size={15} /> chats
-          {notifications > 0 && (
-            <span style={{
-              position: 'absolute', top: '-8px', right: '-12px',
-              background: 'var(--accent)', color: '#fff', fontSize: '10px',
-              fontWeight: 700, borderRadius: '50%', width: '16px', height: '16px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {notifications}
-            </span>
-          )}
+        <Link to="/settings" aria-label="Settings" style={{
+          color: 'var(--text-secondary)',
+          textDecoration: 'none',
+          display: 'flex', alignItems: 'center',
+          gap: '5px', fontSize: '13px',
+        }}>
+          <Settings size={isMobile ? 18 : 15} />
+          {!isMobile && 'settings'}
         </Link>
       </div>
     </nav>

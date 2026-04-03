@@ -11,6 +11,7 @@ import MyPosts from './pages/MyPosts'
 import ChatRequests from './pages/ChatRequests'
 import Chat from './pages/Chat'
 import Therapist from './pages/Therapist'
+import Settings from './pages/Settings'
 import BottomNav from './components/BottomNav'
 import DMInbox from './components/DMInbox'
 import SplashScreen from './components/SplashScreen'
@@ -53,7 +54,7 @@ function AppRoutes() {
   }, [acceptedRoomId])
 
   const showBottomNav =
-    ['/', '/create', '/my-posts', '/therapist'].includes(location.pathname) ||
+    ['/', '/create', '/therapist', '/chat-requests'].includes(location.pathname) ||
     location.pathname.startsWith('/post/')
 
   return (
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route path="/chat-requests" element={<ChatRequests />} />
         <Route path="/chat/:roomId" element={<Chat />} />
         <Route path="/therapist" element={<Therapist />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
       <DMInbox />
       {showBottomNav && <BottomNav />}

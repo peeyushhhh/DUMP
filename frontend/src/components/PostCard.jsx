@@ -42,7 +42,7 @@ export default function PostCard({ post }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         position: 'relative',
-        padding: isMobile ? '16px' : '18px 20px',
+        padding: isMobile ? '12px 12px 8px 12px' : '18px 20px',
         borderRadius: '10px',
         cursor: 'pointer',
         marginBottom: '0.85rem',
@@ -67,9 +67,9 @@ export default function PostCard({ post }) {
 
       <p style={{
         color: 'var(--text-primary)',
-        fontSize: isMobile ? '14px' : '15px',
+        fontSize: isMobile ? '13px' : '15px',
         lineHeight: 1.7,
-        marginBottom: '0.6rem',
+        marginBottom: isMobile ? '0.35rem' : '0.6rem',
         position: 'relative',
       }}>
         {post.content}
@@ -80,11 +80,12 @@ export default function PostCard({ post }) {
           src={post.imageUrl}
           alt="drawing"
           style={{
-            width: '100%', borderRadius: '6px',
-            marginTop: '12px', marginBottom: '4px',
+            width: '100%',
+            height: 'auto',
+            borderRadius: '6px',
+            marginTop: '12px',
+            marginBottom: '4px',
             display: 'block',
-            maxHeight: isMobile ? '180px' : '300px',
-            objectFit: isMobile ? 'cover' : 'contain',
           }}
         />
       )}
@@ -94,8 +95,8 @@ export default function PostCard({ post }) {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '5px',
-          marginTop: '8px',
-          marginBottom: '8px',
+          marginTop: isMobile ? '4px' : '8px',
+          marginBottom: isMobile ? '4px' : '8px',
           padding: '3px 9px 3px 7px',
           borderRadius: '999px',
           background: `${moodColor}14`,
@@ -124,6 +125,7 @@ export default function PostCard({ post }) {
         alignItems: 'center',
         position: 'relative',
         opacity: 0.7,
+        marginTop: isMobile ? '2px' : undefined,
       }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <Clock size={10} /> {timeAgo(post.createdAt)}

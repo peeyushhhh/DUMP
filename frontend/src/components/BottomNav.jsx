@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, PlusCircle, User, MessageCircle } from 'lucide-react'
+import { Home, PlusCircle, Sofa, MessageCircle } from 'lucide-react'
 
 const items = [
-  { path: '/',          Icon: Home,          accent: '#8b5cf6' },
-  { path: '/create',    Icon: PlusCircle,    accent: '#8b5cf6' },
-  { path: '/my-posts',  Icon: User,          accent: '#8b5cf6' },
-  { path: '/therapist', Icon: MessageCircle, accent: '#c2410c' },
+  { path: '/', label: 'home', Icon: Home, accent: '#8b5cf6' },
+  { path: '/create', label: 'post', Icon: PlusCircle, accent: '#8b5cf6' },
+  { path: '/therapist', label: 'therapist', Icon: Sofa, accent: '#c2410c' },
+  { path: '/chat-requests', label: 'chats', Icon: MessageCircle, accent: '#8b5cf6' },
 ]
 
 export default function BottomNav() {
@@ -15,7 +15,10 @@ export default function BottomNav() {
     <nav style={{
       position: 'fixed',
       bottom: 0, left: 0, right: 0,
-      height: '64px',
+      minHeight: '64px',
+      paddingTop: '6px',
+      paddingBottom: '8px',
+      boxSizing: 'border-box',
       background: '#0a0a0a',
       borderTop: '1px solid #1a1a1a',
       display: 'flex',
@@ -23,7 +26,7 @@ export default function BottomNav() {
       justifyContent: 'space-around',
       zIndex: 1000,
     }}>
-      {items.map(({ path, Icon, accent }) => {
+      {items.map(({ path, label, Icon, accent }) => {
         const active = pathname === path
         const color  = active ? accent : '#444'
 
@@ -31,12 +34,13 @@ export default function BottomNav() {
           <Link
             key={path}
             to={path}
+            aria-label={label}
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
+              gap: '4px',
               textDecoration: 'none',
               minWidth: '56px',
               height: '100%',
@@ -46,7 +50,7 @@ export default function BottomNav() {
             {/* pill indicator */}
             <span style={{
               position: 'absolute',
-              top: '6px',
+              top: '4px',
               width: active ? '20px' : '0px',
               height: '3px',
               borderRadius: '99px',
@@ -56,7 +60,7 @@ export default function BottomNav() {
 
             {/* icon */}
             <Icon
-              size={23}
+              size={22}
               color={color}
               strokeWidth={active ? 2.4 : 1.8}
               style={{
@@ -66,6 +70,16 @@ export default function BottomNav() {
                   : 'none',
               }}
             />
+            <span style={{
+              fontSize: '9px',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              textTransform: 'lowercase',
+              color,
+              lineHeight: 1,
+            }}>
+              {label}
+            </span>
           </Link>
         )
       })}
