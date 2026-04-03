@@ -1,14 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getPostById, getReplysuggestions } from '../services/postService'
-import { getRepliesByPost, createReply } from '../services/replyService'
+import { getPostById, getCommentSuggestions } from '../services/postService'
+import { getCommentsByPost, createComment } from '../services/replyService'
 import { sendChatRequest } from '../services/chatService'
 import { useAnon } from '../context/AnonContext'
 import { useSocketContext } from '../context/SocketContext'
 import Navbar from '../components/Navbar'
-import { ArrowLeft, MessageCircle, Clock, MessageSquare, Send, Loader2, Sparkles, AlertCircle, MessagesSquare } from 'lucide-react'
+import {
+  ArrowLeft,
+  MessageCircle,
+  Clock,
+  Send,
+  Loader2,
+  Sparkles,
+  AlertCircle,
+  MessagesSquare,
+} from 'lucide-react'
 
-const MAX_REPLY_CHARS = 500
+const MAX_COMMENT_CHARS = 500
+
+const NESTED_BORDER = '2px solid color-mix(in srgb, var(--accent) 20%, transparent)'
 
 const MOOD_META = {
   sad:         { emoji: '🩶', label: 'sad' },
@@ -35,28 +46,86 @@ function timeAgo(dateStr) {
   return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`
 }
 
+function totalCommentCount(comments) {
+  if (!Array.isArray(comments)) return 0
+  return comments.reduce((n, c) => n + 1 + (c.replies?.length || 0), 0)
+}
+
+function applyNewCommentFromSocket(prevComments, comment) {
+  const cid = comment?._id != null ? String(comment._id) : ''
+  if (!cid) return { next: prevComments, applied: false }
+
+  const alreadyHave = (list) => {
+    for (const c of list) {
+      if (String(c._id) === cid) return true
+      for (const r of c.replies || []) {
+        if (String(r._id) === cid) return true
+      }
+    }
+    return false
+  }
+  if (alreadyHave(prevComments)) return { next: prevComments, applied: false }
+
+  const parentId = comment.parentId != null && comment.parentId !== ''
+    ? String(comment.parentId)
+    : null
+
+  if (!parentId) {
+    const node = { ...comment, replies: comment.replies || [] }
+    return { next: [node, ...prevComments], applied: true }
+  }
+
+  let applied = false
+  const next = prevComments.map((c) => {
+    if (String(c._id) !== parentId) return c
+    const replies = [...(c.replies || [])]
+    if (replies.some((r) => String(r._id) === cid)) return c
+    replies.push({ ...comment })
+    replies.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    applied = true
+    return { ...c, replies }
+  })
+  return { next, applied }
+}
+
 export default function PostDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { anonId } = useAnon()
   const { socket } = useSocketContext()
   const [post, setPost] = useState(null)
-  const [replies, setReplies] = useState([])
+  const [comments, setComments] = useState([])
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
-  const [replyLoading, setReplyLoading] = useState(false)
+  const [commentLoading, setCommentLoading] = useState(false)
   const [error, setError] = useState('')
   const [requestSent, setRequestSent] = useState(false)
   const [requestError, setRequestError] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [replyToId, setReplyToId] = useState(null)
+  const [nestedContent, setNestedContent] = useState('')
+  const [nestedLoading, setNestedLoading] = useState(false)
+
+  const loadComments = useCallback(async () => {
+    if (!id) return
+    const res = await getCommentsByPost(id)
+    setComments(res?.data?.comments ?? [])
+  }, [id])
+
+  const loadPost = useCallback(async () => {
+    if (!id) return
+    const res = await getPostById(id)
+    setPost(res?.data?.post ?? null)
+  }, [id])
 
   useEffect(() => {
     if (!id) return
-    Promise.all([getPostById(id), getRepliesByPost(id)])
-      .then(([postRes, repliesRes]) => {
-        setPost(postRes.data?.post ?? null)
-        setReplies(repliesRes.data?.replies ?? [])
+    setLoading(true)
+    Promise.all([getPostById(id), getCommentsByPost(id)])
+      .then(([postRes, commentsRes]) => {
+        setPost(postRes?.data?.post ?? null)
+        setComments(commentsRes?.data?.comments ?? [])
       })
       .catch((err) => setError(err.response?.data?.error ?? err.message ?? 'Failed to load post'))
       .finally(() => setLoading(false))
@@ -65,11 +134,44 @@ export default function PostDetail() {
   useEffect(() => {
     if (!post || post.anonymousId === anonId) return
     setSuggestionsLoading(true)
-    getReplysuggestions(post._id)
-      .then((res) => setSuggestions(res.data?.suggestions ?? []))
+    getCommentSuggestions(post._id)
+      .then((res) => setSuggestions(res?.data?.data?.suggestions ?? res?.data?.suggestions ?? []))
       .catch(() => setSuggestions([]))
       .finally(() => setSuggestionsLoading(false))
-  }, [post])
+  }, [post, anonId])
+
+  useEffect(() => {
+    if (!id) return
+    const s = socket?.current
+    if (!s) return
+    const onNewComment = (payload) => {
+      const comment = payload?.comment
+      const eventPostId = payload?.postId
+      if (!comment || eventPostId == null || String(eventPostId) !== String(id)) return
+      setComments((prev) => {
+        const { next, applied } = applyNewCommentFromSocket(prev, comment)
+        if (applied) {
+          setPost((p) =>
+            p && String(p._id) === String(id)
+              ? { ...p, replyCount: (p.replyCount || 0) + 1 }
+              : p
+          )
+        }
+        return next
+      })
+    }
+    s.on('new_comment', onNewComment)
+    return () => s.off('new_comment', onNewComment)
+  }, [socket, id])
+
+  useEffect(() => {
+    if (!id) return
+    const onVis = () => {
+      if (document.visibilityState === 'visible') loadComments()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [id, loadComments])
 
   const handleChatRequest = async () => {
     if (post.anonymousId === anonId) return
@@ -82,20 +184,36 @@ export default function PostDetail() {
     }
   }
 
-  const handleReplySubmit = async (e) => {
+  const handleTopCommentSubmit = async (e) => {
     e.preventDefault()
-    if (!content.trim() || replyLoading || !id) return
-    setReplyLoading(true)
+    if (!content.trim() || commentLoading || !id) return
+    setCommentLoading(true)
     setError('')
     try {
-      await createReply(id, content.trim(), anonId)
+      await createComment(id, content.trim(), anonId)
       setContent('')
-      const repliesRes = await getRepliesByPost(id)
-      setReplies(repliesRes.data?.replies ?? [])
+      await Promise.all([loadComments(), loadPost()])
     } catch (err) {
-      setError(err.response?.data?.error ?? err.message ?? 'Failed to add reply')
+      setError(err.response?.data?.error ?? err.message ?? 'Failed to add comment')
     } finally {
-      setReplyLoading(false)
+      setCommentLoading(false)
+    }
+  }
+
+  const handleNestedSubmit = async (e) => {
+    e.preventDefault()
+    if (!nestedContent.trim() || nestedLoading || !id || !replyToId) return
+    setNestedLoading(true)
+    setError('')
+    try {
+      await createComment(id, nestedContent.trim(), anonId, replyToId)
+      setNestedContent('')
+      setReplyToId(null)
+      await Promise.all([loadComments(), loadPost()])
+    } catch (err) {
+      setError(err.response?.data?.error ?? err.message ?? 'Failed to add comment')
+    } finally {
+      setNestedLoading(false)
     }
   }
 
@@ -123,13 +241,14 @@ export default function PostDetail() {
 
   const isOwn = post.anonymousId === anonId
   const mood = MOOD_META[post.mood] ?? null
+  const topCount = comments.length
+  const totalShown = totalCommentCount(comments)
 
   return (
     <>
       <Navbar />
       <main className="page-wrap fade-up">
 
-        {/* Back button */}
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -142,7 +261,6 @@ export default function PostDetail() {
           <ArrowLeft size={15} /> back
         </button>
 
-        {/* Post card */}
         <section className="glass-card" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
           <p style={{ color: 'var(--text-primary)', fontSize: '16px', lineHeight: 1.72, marginBottom: '0.75rem' }}>
             {post.content}
@@ -155,9 +273,11 @@ export default function PostDetail() {
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Clock size={11} /> {timeAgo(post.createdAt)}
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MessageSquare size={11} />
-                {post.replyCount === 1 ? '1 reply' : `${post.replyCount} replies`}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <MessageCircle size={11} style={{ color: 'var(--text-muted)' }} />
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {post.replyCount === 1 ? '1 comment' : `${post.replyCount} comments`}
+                </span>
               </span>
             </div>
             {mood && (
@@ -168,7 +288,6 @@ export default function PostDetail() {
           </div>
         </section>
 
-        {/* Chat request */}
         {!isOwn && (
           <div style={{ marginBottom: '1rem' }}>
             {requestSent ? (
@@ -188,35 +307,162 @@ export default function PostDetail() {
           </div>
         )}
 
-        {/* Replies header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
           <h2 className="section-kicker" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <MessagesSquare size={13} /> replies
+            <MessagesSquare size={13} /> comments
           </h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>{replies.length}</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>
+            {topCount} thread{topCount === 1 ? '' : 's'} · {totalShown} total
+          </span>
         </div>
 
-        {/* Empty replies */}
-        {replies.length === 0 && (
+        {comments.length === 0 && (
           <div className="glass-card" style={{ padding: '1rem', textAlign: 'center', marginBottom: '1rem' }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>no replies yet. be the first.</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>no comments yet. be the first.</p>
           </div>
         )}
 
-        {replies.map((reply) => (
-          <div key={reply._id} className="glass-card" style={{ padding: '1rem', marginBottom: '0.6rem', borderLeft: '2px solid var(--border)' }}>
-            <p style={{ color: 'var(--text-primary)', fontSize: '15px', lineHeight: 1.6, marginBottom: '0.35rem' }}>
-              {reply.content}
-            </p>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Clock size={10} /> {timeAgo(reply.createdAt)}
-            </span>
-          </div>
-        ))}
+        {comments.map((comment) => {
+          const cm = MOOD_META[comment.mood] ?? null
+          const nested = comment.replies || []
+          const showInlineReply = replyToId === comment._id
 
-        {/* Reply form */}
-        <form onSubmit={handleReplySubmit} className="glass-card" style={{ padding: '1rem', marginTop: '1rem' }}>
-          <p className="section-kicker" style={{ marginBottom: '8px' }}>leave a reply</p>
+          return (
+            <div key={comment._id} className="glass-card" style={{ padding: '1rem', marginBottom: '0.6rem', borderLeft: '2px solid var(--border)' }}>
+              <p style={{ color: 'var(--text-primary)', fontSize: '15px', lineHeight: 1.6, marginBottom: '0.35rem' }}>
+                {comment.content}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Clock size={10} /> {timeAgo(comment.createdAt)}
+                </span>
+                {cm && (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    {cm.emoji} {cm.label}
+                  </span>
+                )}
+              </div>
+              {nested.length > 0 && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.72rem', margin: '0 0 8px' }}>
+                  {nested.length} {nested.length === 1 ? 'comment' : 'comments'}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setReplyToId(showInlineReply ? null : comment._id)
+                  setNestedContent('')
+                  setError('')
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: 'var(--text-muted)',
+                  fontSize: '0.76rem',
+                  cursor: 'pointer',
+                  marginBottom: showInlineReply ? '10px' : 0,
+                }}
+              >
+                reply
+              </button>
+
+              {showInlineReply && (
+                <form onSubmit={handleNestedSubmit} style={{ marginTop: '4px', marginBottom: nested.length ? '12px' : 0 }}>
+                  <textarea
+                    value={nestedContent}
+                    onChange={(e) => setNestedContent(e.target.value.slice(0, MAX_COMMENT_CHARS))}
+                    maxLength={MAX_COMMENT_CHARS}
+                    placeholder="Write a comment…"
+                    style={{
+                      background: '#111119',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border)',
+                      padding: '10px 12px',
+                      minHeight: '72px',
+                      width: '100%',
+                      fontSize: '14px',
+                      resize: 'vertical',
+                      outline: 'none',
+                      borderRadius: '10px',
+                      lineHeight: 1.5,
+                      marginBottom: '8px',
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      type="submit"
+                      className="primary-btn"
+                      disabled={!nestedContent.trim() || nestedLoading}
+                      style={{
+                        fontSize: '0.82rem',
+                        padding: '8px 14px',
+                        opacity: !nestedContent.trim() || nestedLoading ? 0.6 : 1,
+                        cursor: !nestedContent.trim() || nestedLoading ? 'not-allowed' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {nestedLoading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={14} />}
+                      post
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setReplyToId(null); setNestedContent(''); setError('') }}
+                      style={{
+                        background: 'var(--bg-hover)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.82rem',
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {nested.length > 0 && (
+                <div style={{ marginTop: '10px' }}>
+                  {nested.map((r) => {
+                    const rm = MOOD_META[r.mood] ?? null
+                    return (
+                      <div
+                        key={r._id}
+                        style={{
+                          paddingLeft: '16px',
+                          marginTop: '10px',
+                          borderLeft: NESTED_BORDER,
+                        }}
+                      >
+                        <p style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: 1.55, marginBottom: '0.25rem' }}>
+                          {r.content}
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={9} /> {timeAgo(r.createdAt)}
+                          </span>
+                          {rm && (
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                              {rm.emoji} {rm.label}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        <form onSubmit={handleTopCommentSubmit} className="glass-card" style={{ padding: '1rem', marginTop: '1rem' }}>
+          <p className="section-kicker" style={{ marginBottom: '8px' }}>leave a comment</p>
 
           {!isOwn && (
             <div style={{ marginBottom: '0.75rem', minHeight: '32px' }}>
@@ -248,8 +494,8 @@ export default function PostDetail() {
 
           <textarea
             value={content}
-            onChange={(e) => setContent(e.target.value.slice(0, MAX_REPLY_CHARS))}
-            maxLength={MAX_REPLY_CHARS}
+            onChange={(e) => setContent(e.target.value.slice(0, MAX_COMMENT_CHARS))}
+            maxLength={MAX_COMMENT_CHARS}
             placeholder="Write something kind..."
             style={{
               background: '#111119', color: 'var(--text-primary)',
@@ -259,7 +505,7 @@ export default function PostDetail() {
             }}
           />
           <div style={{ color: content.length > 450 ? 'var(--danger)' : 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'right', marginTop: '0.3rem', marginBottom: '0.75rem' }}>
-            {content.length} / {MAX_REPLY_CHARS}
+            {content.length} / {MAX_COMMENT_CHARS}
           </div>
           {error && (
             <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -269,16 +515,16 @@ export default function PostDetail() {
           <button
             type="submit"
             className="primary-btn"
-            disabled={!content.trim() || replyLoading}
+            disabled={!content.trim() || commentLoading}
             style={{
-              width: '100%', opacity: !content.trim() || replyLoading ? 0.6 : 1,
-              cursor: !content.trim() || replyLoading ? 'not-allowed' : 'pointer',
+              width: '100%', opacity: !content.trim() || commentLoading ? 0.6 : 1,
+              cursor: !content.trim() || commentLoading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
             }}
           >
-            {replyLoading
+            {commentLoading
               ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> posting...</>
-              : <><Send size={15} /> post reply</>
+              : <><Send size={15} /> post comment</>
             }
           </button>
         </form>

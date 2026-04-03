@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import useSocket from '../hooks/useSocket';
 import { useAnon } from './AnonContext';
 import { getPendingRequests } from '../services/chatService';
+import { getNotifications } from '../services/notificationService';
 
 const SocketContext = createContext(null);
 
@@ -31,6 +32,7 @@ export function SocketProvider({ children }) {
   const socketRef = useSocket(anonId);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [notifications, setNotifications] = useState(0);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [acceptedRoomId, setAcceptedRoomId] = useState(null);
   const [declinedRequestId, setDeclinedRequestId] = useState(null);
   const [activeRooms, setActiveRoomsState] = useState(() => loadRooms());
@@ -85,6 +87,16 @@ export function SocketProvider({ children }) {
     setActiveRooms((prev) => prev.filter((r) => r.roomId !== roomId));
   }, [setActiveRooms]);
 
+  const refreshUnreadNotifCount = useCallback(() => {
+    if (!anonId) return;
+    getNotifications(anonId)
+      .then((body) => {
+        const list = body?.data?.notifications ?? [];
+        setUnreadNotifCount(Array.isArray(list) ? list.length : 0);
+      })
+      .catch(() => {});
+  }, [anonId]);
+
   useEffect(() => {
     if (!anonId) return;
     getPendingRequests(anonId)
@@ -95,6 +107,10 @@ export function SocketProvider({ children }) {
       })
       .catch(() => {});
   }, [anonId]);
+
+  useEffect(() => {
+    refreshUnreadNotifCount();
+  }, [refreshUnreadNotifCount]);
 
   useEffect(() => {
     const socket = socketRef.current;
@@ -137,16 +153,24 @@ export function SocketProvider({ children }) {
       );
     };
 
+    const handleNewNotification = (payload) => {
+      const n = payload?.notification;
+      if (!n || n.recipientId !== anonId) return;
+      setUnreadNotifCount((c) => c + 1);
+    };
+
     socket.on('request_received', handleRequestReceived);
     socket.on('request_accepted', handleRequestAccepted);
     socket.on('request_declined', handleRequestDeclined);
     socket.on('receive_message', handleReceiveMessage);
+    socket.on('new_notification', handleNewNotification);
 
     return () => {
       socket.off('request_received', handleRequestReceived);
       socket.off('request_accepted', handleRequestAccepted);
       socket.off('request_declined', handleRequestDeclined);
       socket.off('receive_message', handleReceiveMessage);
+      socket.off('new_notification', handleNewNotification);
     };
   }, [socketRef, anonId, registerRoom, setActiveRooms]);
 
@@ -156,6 +180,9 @@ export function SocketProvider({ children }) {
     notifications,
     setPendingRequests,
     setNotifications,
+    unreadNotifCount,
+    setUnreadNotifCount,
+    refreshUnreadNotifCount,
     acceptedRoomId,
     setAcceptedRoomId,
     declinedRequestId,

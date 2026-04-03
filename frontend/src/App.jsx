@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import AnonProvider from './context/AnonContext'
+import AnonProvider, { useAnon } from './context/AnonContext'
 import SocketProvider from './context/SocketContext'
 import { useSocketContext } from './context/SocketContext'
+import registerPush from './services/pushService'
 import Home from './pages/Home'
 import CreatePost from './pages/CreatePost'
 import PostDetail from './pages/PostDetail'
@@ -13,6 +14,23 @@ import Therapist from './pages/Therapist'
 import BottomNav from './components/BottomNav'
 import DMInbox from './components/DMInbox'
 import SplashScreen from './components/SplashScreen'
+
+function PushBootstrap() {
+  const { anonId } = useAnon()
+
+  useEffect(() => {
+    if (!anonId) return
+    ;(async () => {
+      try {
+        await registerPush(anonId)
+      } catch {
+        /* fail silently — push is optional */
+      }
+    })()
+  }, [anonId])
+
+  return null
+}
 
 function AppRoutes() {
   const navigate = useNavigate()
@@ -58,6 +76,7 @@ function App() {
         <BrowserRouter>
           <AnonProvider>
             <SocketProvider>
+              <PushBootstrap />
               <AppRoutes />
             </SocketProvider>
           </AnonProvider>

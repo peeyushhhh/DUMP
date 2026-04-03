@@ -9,6 +9,9 @@ const replyRoutes = require('./routes/replyRoutes')
 const reportRoutes = require('./routes/reportRoutes')
 const chatRoutes = require('./routes/chatRoutes')
 const therapistRoutes = require('./routes/therapistRoutes')
+const notificationRoutes = require('./routes/notificationRoutes')
+const pushRoutes = require('./routes/pushRoutes')
+
 
 const app = express()
 app.set('trust proxy', 1)
@@ -58,10 +61,9 @@ app.use(requestId)
 // ── Rate limiters ─────────────────────────────────────────────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: process.env.NODE_ENV === 'development' ? 999999 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'development',
   message: { success: false, message: 'Too many requests, please try again later.' },
 })
 
@@ -94,6 +96,8 @@ app.use('/api/v1/replies', replyRoutes)
 app.use('/api/v1/reports', reportRoutes)
 app.use('/api/v1/chat', chatRoutes)
 app.use('/api/v1/therapist', therapistChatLimiter, therapistRoutes)
+app.use('/api/v1/notifications', notificationRoutes)
+app.use('/api/v1/push', pushRoutes)
 
 app.use(errorHandler)
 

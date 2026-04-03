@@ -10,4 +10,15 @@ function emitNewPost(post) {
   io.emit('new_post', { post: payload });
 }
 
-module.exports = { setIo, emitNewPost };
+function emitNewNotification(recipientAnonId, notificationPayload) {
+  if (!io || !recipientAnonId) return;
+  io.to(recipientAnonId).emit('new_notification', notificationPayload);
+}
+
+function emitNewComment(postId, comment) {
+  if (!io || postId == null || !comment) return;
+  const plain = comment && typeof comment.toObject === 'function' ? comment.toObject() : comment;
+  io.emit('new_comment', { postId: String(postId), comment: plain });
+}
+
+module.exports = { setIo, emitNewPost, emitNewNotification, emitNewComment };

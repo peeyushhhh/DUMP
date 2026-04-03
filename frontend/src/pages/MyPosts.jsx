@@ -130,7 +130,7 @@ function PostCard({ post, onDelete, deletingId, index }) {
           <span>{timeAgo(post.createdAt)}</span>
           {post.replyCount > 0 && (
             <span style={{ opacity: 0.6 }}>
-              {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
+              {post.replyCount} {post.replyCount === 1 ? 'comment' : 'comments'}
             </span>
           )}
         </div>

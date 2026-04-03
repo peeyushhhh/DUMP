@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { createReply, getRepliesByPost } = require('../controllers/replyController');
-const { replyLimiter } = require('../middleware/rateLimiter');
+const { createComment, getCommentsByPost } = require('../controllers/replyController');
+const { commentLimiter } = require('../middleware/rateLimiter');
 
-router.post('/', replyLimiter, createReply);
-router.get('/:postId', getRepliesByPost);
+router.post('/', commentLimiter, createComment);
+router.get('/:postId', getCommentsByPost);
 
 module.exports = router;

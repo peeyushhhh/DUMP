@@ -92,7 +92,7 @@ const deletePost = asyncHandler(async (req, res) => {
   return sendSuccess(res, {}, 'Post deleted successfully');
 });
 
-const getReplysuggestions = asyncHandler(async (req, res) => {
+const getCommentSuggestions = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const post = await Post.findById(id).lean();
@@ -109,5 +109,5 @@ module.exports = {
   getPosts,
   getPostById,
   deletePost,
-  getReplysuggestions,
+  getCommentSuggestions,
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, Clock } from 'lucide-react'
+import { MessageCircle, Clock } from 'lucide-react'
 
 function timeAgo(dateStr) {
   const date = new Date(dateStr)
@@ -125,8 +125,8 @@ export default function PostCard({ post }) {
           <Clock size={10} /> {timeAgo(post.createdAt)}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <MessageSquare size={10} />
-          {post.replyCount === 1 ? '1 reply' : `${post.replyCount} replies`}
+          <MessageCircle size={10} />
+          {post.replyCount === 1 ? '1 comment' : `${post.replyCount} comments`}
         </span>
       </div>
     </div>
